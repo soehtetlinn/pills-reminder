@@ -17,6 +17,16 @@ python -m http.server 8000
 Connect the GitHub repository in Netlify. No build command is needed; the publish directory is the
 repository root (already set in `netlify.toml`).
 
+## Google login and sync (optional)
+
+Sync across devices uses Firebase (Google sign-in + Firestore). It stays off until
+`firebase-config.js` is filled in:
+
+1. Create a Firebase project and add a Web app; copy its config into `firebase-config.js`.
+2. Authentication → Sign-in method → enable Google.
+3. Authentication → Settings → Authorized domains → add the site's domain(s).
+4. Firestore Database → create a database, then paste `firestore.rules` into the Rules tab.
+
 ## Notes
 
 - Data (times, daily log) is stored in the browser's `localStorage` on the device only.

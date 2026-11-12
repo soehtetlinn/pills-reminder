@@ -40,10 +40,10 @@
     main.layout.layout {
       display: grid; gap: 1.5rem; align-items: start;
       grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      grid-template-rows: auto auto auto auto 1fr auto;
-      grid-template-areas: "step timeline" "prn timeline" "settings timeline" "warnings timeline" "history timeline" "footer footer";
+      grid-template-rows: auto auto auto auto auto 1fr auto;
+      grid-template-areas: "step timeline" "prn timeline" "settings timeline" "account timeline" "warnings timeline" "history timeline" "footer footer";
     }
-    .area-step { grid-area: step; } .area-settings { grid-area: settings; } .area-timeline { grid-area: timeline; }
+    .area-step { grid-area: step; } .area-account { grid-area: account; } .area-settings { grid-area: settings; } .area-timeline { grid-area: timeline; }
     .area-prn { grid-area: prn; } .area-history { grid-area: history; } .area-warnings { grid-area: warnings; } .area-footer { grid-area: footer; }
   }
   summary::-webkit-details-marker { display: none; }
@@ -161,6 +161,12 @@
     </div>
   </details>
 
+  <!-- အကောင့်နှင့် Sync -->
+  <details id="accountBox" class="hidden area-account bg-white rounded-2xl shadow-sm">
+    <summary class="list-none cursor-pointer select-none flex items-center justify-between gap-3 px-5 py-4 font-bold text-slate-800"><span>☁️ အကောင့်နှင့် Sync <span id="accountChip" class="font-normal text-sm text-slate-500"></span></span><span class="chev text-slate-400 text-xl leading-none transition-transform">⌄</span></summary>
+    <div id="accountBody" class="px-5 pb-5"></div>
+  </details>
+
   <!-- ဆေးဘက်ဆိုင်ရာ သတိပေးချက်များ -->
   <details class="area-warnings bg-rose-50 border border-rose-200 rounded-2xl">
     <summary class="list-none cursor-pointer select-none flex items-center justify-between gap-3 px-5 py-4 font-bold text-rose-800"><span>⚠️ အရေးကြီး သတိပေးချက်များ</span><span class="chev text-slate-400 text-xl leading-none transition-transform">⌄</span></summary>
@@ -196,6 +202,7 @@
   <div id="modalCard" class="pop bg-white w-full max-w-md rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"></div>
 </div>
 
+<script src="firebase-config.js"></script>
 <script>
 (() => {
   'use strict';
@@ -256,7 +263,8 @@
     }
   } catch (e) { /* သိမ်းထားချက် မရှိ/မဖတ်နိုင် — မူလတန်ဖိုးသုံးမည် */ }
 
-  function save() {
+  function save() { saveLocal(); cloudPush(); }
+  function saveLocal() {
     const keys = Object.keys(state.days).sort();
     while (keys.length > 30) delete state.days[keys.shift()];
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
@@ -590,6 +598,8 @@
     else if (action === 'reset-times') { state.settings = { ...DEFAULTS }; fillInputs(); afterTimeChange(); }
     else if (action === 'enable-notif') { enableNotifications(); return; }
     else if (action === 'install') { installApp(); return; }
+    else if (action === 'sign-in') { signIn(); return; }
+    else if (action === 'sign-out') { cloud.authM.signOut(cloud.auth); return; }
 
     save(); render();
   }
@@ -742,6 +752,131 @@
     $('#installRow').classList.add('hidden');
   }
 
+  /* ---------- အကောင့်နှင့် Sync (Firebase) ----------
+     firebase-config.js ထဲတွင် config ထည့်ထားမှသာ အလုပ်လုပ်သည်။ မထည့်ထားလျှင် ဤစက်ထဲတွင်သာ သိမ်းမည်။
+     Cloud တွင် users/{uid} (အချိန်ဆက်တင်) နှင့် users/{uid}/days/{ရက်စွဲ} (နေ့စဉ်မှတ်တမ်း) အဖြစ် သိမ်းသည်။
+     အသိပေးပြီး/မပြီး (notified, warned) ကို စက်တစ်လုံးချင်းစီတွင်သာ ထားသည်။ */
+  const FB_VER = '10.14.1';
+  const DOSE_IDS = ['miracid', 'domp', 'myonal1', 'myonal2', 'myonal3', 'clona'];
+  const MEAL_IDS = ['breakfast', 'lunch', 'dinner'];
+  const cloud = { ready: false, user: null, error: null, unsub: [], synced: { settings: null, days: {} } };
+  // key အစီအစဉ် မတူလည်း တန်ဖိုးတူလျှင် တူသည်ဟု ယူဆရန်
+  const canon = v => JSON.stringify(v == null ? null : v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, key) => { o[key] = x[key]; return o; }, {}) : x);
+  const same = (a, b) => canon(a) === canon(b);
+  const copy = v => JSON.parse(JSON.stringify(v));
+
+  // ဤစက်တွင် ပြောင်းလဲသွားသော အကွက်များကိုသာ cloud သို့ ပို့မည် (အခြားဖုန်း၏ မှတ်တမ်းကို မဖျက်မိစေရန်)
+  function cloudPush() {
+    if (!cloud.ready) return;
+    const { fs, db, user } = cloud;
+    if (!same(state.settings, cloud.synced.settings)) {
+      cloud.synced.settings = copy(state.settings);
+      fs.setDoc(fs.doc(db, 'users', user.uid), { settings: state.settings, updatedAt: fs.serverTimestamp() }, { merge: true }).catch(cloudError);
+    }
+    Object.keys(state.days).forEach(key => {
+      const d = state.days[key], was = cloud.synced.days[key] || { doses: {}, meals: {}, prn: [] };
+      const out = {};
+      DOSE_IDS.forEach(id => { if (!same(d.doses[id], was.doses[id])) (out.doses = out.doses || {})[id] = d.doses[id] || fs.deleteField(); });
+      MEAL_IDS.forEach(id => { if (!same(d.meals[id], was.meals[id])) (out.meals = out.meals || {})[id] = d.meals[id] != null ? d.meals[id] : fs.deleteField(); });
+      if (!same(d.prn, was.prn)) out.prn = d.prn;
+      if (!Object.keys(out).length) return;
+      cloud.synced.days[key] = copy({ doses: d.doses, meals: d.meals, prn: d.prn });
+      fs.setDoc(fs.doc(db, 'users', user.uid, 'days', key), out, { merge: true }).catch(cloudError);
+    });
+  }
+
+  function applyRemoteDay(key, data, first) {
+    const r = { doses: data.doses || {}, meals: data.meals || {}, prn: data.prn || [] };
+    const d = getDay(key);
+    if (first) {
+      // ပထမဆုံးအကြိမ် ချိတ်ချိန် — ဤစက်ထဲတွင်သာ ရှိသော မှတ်တမ်းကို ထိန်းထားပြီး၊ တူညီသောအကွက်တွင် cloud ကို ဦးစားပေးမည်
+      d.doses = { ...d.doses, ...r.doses }; d.meals = { ...d.meals, ...r.meals };
+      if (r.prn.length || !d.prn.length) d.prn = r.prn;
+    } else { d.doses = r.doses; d.meals = r.meals; d.prn = r.prn; }
+    cloud.synced.days[key] = copy(r);
+  }
+
+  function onUser(user) {
+    cloud.unsub.forEach(f => f()); cloud.unsub = [];
+    cloud.ready = false; cloud.user = user; cloud.error = null; cloud.synced = { settings: null, days: {} };
+    $('#accountBox').open = !user;
+    renderAccount();
+    if (!user) return;
+    const { fs, db } = cloud;
+    let gotSettings = false, gotDays = false, firstDays = true;
+    const done = () => {
+      if (!gotSettings || !gotDays) return;
+      cloud.ready = true;
+      saveLocal(); cloudPush(); render(); renderAccount();
+    };
+    cloud.unsub.push(fs.onSnapshot(fs.doc(db, 'users', user.uid), snap => {
+      const r = snap.data();
+      if (r && r.settings) {
+        cloud.synced.settings = copy(r.settings);
+        const merged = { ...DEFAULTS, ...r.settings };
+        if (!same(state.settings, merged)) { state.settings = merged; fillInputs(); }
+      }
+      gotSettings = true; done();
+    }, cloudError));
+    const cutoff = dateKey(new Date(Date.now() - 31 * 864e5));
+    const q = fs.query(fs.collection(db, 'users', user.uid, 'days'), fs.where(fs.documentId(), '>=', cutoff));
+    cloud.unsub.push(fs.onSnapshot(q, snap => {
+      snap.docChanges().forEach(ch => { if (ch.type !== 'removed') applyRemoteDay(ch.doc.id, ch.doc.data(), firstDays); });
+      firstDays = false; gotDays = true; done();
+    }, cloudError));
+  }
+
+  async function signIn() {
+    const { authM, auth } = cloud;
+    if (!auth) return;
+    const provider = new authM.GoogleAuthProvider();
+    cloud.error = null;
+    try { await authM.signInWithPopup(auth, provider); }
+    catch (e) {
+      if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment'].includes(e.code)) authM.signInWithRedirect(auth, provider).catch(cloudError);
+      else if (!['auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(e.code)) cloudError(e);
+    }
+  }
+  function cloudError(e) { console.warn('sync:', e); cloud.error = (e && (e.code || e.message)) || 'error'; renderAccount(); }
+
+  function renderAccount() {
+    const body = $('#accountBody'), chip = $('#accountChip');
+    const btn = 'rounded-xl font-medium px-4 py-2.5 text-sm';
+    const err = cloud.error ? `<p class="mt-2 text-sm text-rose-700">⚠️ ချိတ်ဆက်မှု အမှား — <span id="accountErr"></span></p>` : '';
+    if (!cloud.auth) {
+      chip.textContent = ''; body.innerHTML = `<p class="text-sm text-slate-500">ချိတ်ဆက်နေပါသည်…</p>${err}`;
+    } else if (!cloud.user) {
+      chip.textContent = '· မဝင်ရသေးပါ';
+      body.innerHTML = `<p class="text-sm text-slate-600">Google account ဖြင့် ဝင်ထားလျှင် ထို account ဖြင့် ဝင်ထားသော ဖုန်း/ကွန်ပျူတာတိုင်းတွင် အချိန်ဆက်တင်နှင့် မှတ်တမ်းများ တူညီနေပါမည်။</p>
+        <button data-action="sign-in" class="${btn} mt-3 bg-teal-600 hover:bg-teal-700 text-white">Google ဖြင့် ဝင်မည်</button>${err}`;
+    } else {
+      chip.textContent = cloud.ready ? '· ✓ sync ဖြစ်နေသည်' : '· ချိတ်ဆက်နေသည်…';
+      body.innerHTML = `<p class="text-sm text-slate-600"><span id="accountEmail" class="font-semibold text-slate-800"></span> ဖြင့် ဝင်ထားပါသည်။ မှတ်တမ်းများကို ဤ account အောက်တွင် သိမ်းပြီး စက်တိုင်းတွင် sync လုပ်ပေးနေပါသည်။</p>
+        <button data-action="sign-out" class="${btn} mt-3 bg-slate-100 hover:bg-slate-200 text-slate-700">ထွက်မည်</button>${err}`;
+      $('#accountEmail').textContent = cloud.user.email || cloud.user.displayName || '';
+    }
+    if (cloud.error) $('#accountErr').textContent = cloud.error;
+  }
+
+  async function cloudInit() {
+    const cfg = window.FIREBASE_CONFIG;
+    if (!cfg || !cfg.apiKey) return;
+    $('#accountBox').classList.remove('hidden');
+    renderAccount();
+    try {
+      const base = `https://www.gstatic.com/firebasejs/${FB_VER}/firebase-`;
+      const [appM, authM, fs] = await Promise.all([import(base + 'app.js'), import(base + 'auth.js'), import(base + 'firestore.js')]);
+      const app = appM.initializeApp(cfg);
+      cloud.fs = fs; cloud.authM = authM;
+      // offline ဖြစ်နေစဉ် ပြောင်းလဲမှုများကို သိမ်းထားပြီး အင်တာနက်ပြန်ရမှ ပို့ပေးရန်
+      try { cloud.db = fs.initializeFirestore(app, { localCache: fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) }); }
+      catch (e) { cloud.db = fs.getFirestore(app); }
+      cloud.auth = authM.getAuth(app);
+      authM.getRedirectResult(cloud.auth).catch(cloudError);
+      authM.onAuthStateChanged(cloud.auth, onUser);
+    } catch (e) { cloudError(e); }
+  }
+
   /* ---------- စတင်ခြင်း ---------- */
   function tick() { render(); checkReminders(); }
   if (window.matchMedia('(min-width: 1024px)').matches) $('#timelineBox').open = true; // laptop တွင် ဇယားကို ဖွင့်ထားမည်
@@ -749,6 +884,7 @@
   tick();
   setInterval(tick, 15000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  cloudInit();
 })();
 </script>
 </body>
