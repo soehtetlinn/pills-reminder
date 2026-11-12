@@ -1,8 +1,21 @@
 # ဆေးနှင့် အစားအစာ အချိန်ဇယား (Medication & Meal Routine Tracker)
 
-A Burmese-language daily medication and meal tracker. Static site: `index.html` holds the whole app
-(Tailwind via CDN + vanilla JavaScript); `sw.js`, `manifest.webmanifest` and `icons/` make it an installable PWA that opens offline and can
-show notifications on mobile browsers.
+A Burmese-language daily medication and meal tracker. Static site, no build step on deploy:
+
+- `index.html` – markup, `app.js` – all behaviour, `tailwind.css` – prebuilt styles
+- `sw.js`, `manifest.webmanifest`, `icons/` – installable PWA, offline, mobile notifications
+- `firebase-config.js`, `firestore.rules` – Google login and sync across devices
+
+When `firebase-config.js` holds a config, nothing is shown until the user signs in with Google.
+Signing out wipes the copy of the data kept on that device.
+
+## Styles
+
+`tailwind.css` is generated. After changing class names in `index.html` or `app.js`, rebuild it:
+
+```bash
+npx tailwindcss@3.4.17 -c build/tailwind.config.js -i build/input.css -o tailwind.css --minify
+```
 
 ## Run locally
 

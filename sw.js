@@ -1,18 +1,20 @@
 // Service worker: makes the app installable, lets it open offline, and lets the page
 // show notifications on mobile browsers (Android Chrome requires a service worker for that).
-const CACHE = 'med-tracker-v4';
+const CACHE = 'med-tracker-v5';
 const CORE = [
   './',
+  'app.js',
+  'tailwind.css',
   'firebase-config.js',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
-  'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap'
 ];
-
-const CACHED_HOSTS = ['cdn.tailwindcss.com', 'fonts.googleapis.com', 'fonts.gstatic.com', 'www.gstatic.com'];
+// Only the app's own files and these font/SDK hosts are cached. Everything else
+// (Firebase login and sync traffic in particular) goes straight to the network.
+const CACHED_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'www.gstatic.com'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -38,10 +40,9 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || !req.url.startsWith('http')) return;
-  // Only the app's own files and its style/font/SDK hosts are cached. Everything else
-  // (Firebase login and sync traffic in particular) goes straight to the network.
   const host = new URL(req.url).hostname;
-  if (host !== self.location.hostname && !CACHED_HOSTS.includes(host)) return;
+  const own = host === self.location.hostname;
+  if (!own && !CACHED_HOSTS.includes(host)) return;
 
   const store = res => {
     if (res && (res.ok || res.type === 'opaque')) {
@@ -51,17 +52,18 @@ self.addEventListener('fetch', e => {
     return res;
   };
 
-  if (req.mode === 'navigate') {
-    // The page itself: newest version when online, saved copy when offline.
-    e.respondWith(fetch(req).then(store).catch(() => caches.match(req).then(r => r || caches.match('./'))));
+  if (own) {
+    // The app's own files: newest version when online (so the page and its script always
+    // match), saved copy when offline.
+    e.respondWith(
+      fetch(req).then(store).catch(() =>
+        caches.match(req).then(r => r || (req.mode === 'navigate' ? caches.match('./') : Response.error())))
+    );
     return;
   }
-  // Everything else (styles, fonts, icons): answer from the cache at once, refresh in the background.
+  // Fonts and the Firebase SDK (versioned, never change): answer from the cache at once.
   e.respondWith(
-    caches.match(req).then(cached => {
-      const fresh = fetch(req).then(store).catch(() => cached);
-      return cached || fresh;
-    })
+    caches.match(req).then(cached => cached || fetch(req).then(store))
   );
 });
 
