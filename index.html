@@ -23,7 +23,6 @@
 <style>
   html { -webkit-text-size-adjust: 100%; }
   body { font-family: "Noto Sans Myanmar", Padauk, "Myanmar Text", Pyidaungsu, system-ui, sans-serif; line-height: 1.9; }
-  input[type="time"] { font-family: system-ui, sans-serif; }
   @keyframes pop { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
   @keyframes slideIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
   .pop { animation: pop .22s ease-out; }
@@ -78,27 +77,27 @@
       <h2 class="text-lg font-bold text-slate-800">⏰ ကျွန်ုပ်၏ နေ့စဉ်အချိန်များ</h2>
       <button data-action="reset-times" class="text-sm text-teal-700 hover:text-teal-900 underline underline-offset-4">မူလအချိန်သို့ ပြန်ထားမည်</button>
     </div>
-    <p class="text-sm text-slate-500 mt-1">အချိန်ပြောင်းလိုက်သည်နှင့် ဆေးသောက်ချိန်ဇယား အလိုအလျောက် ပြန်တွက်ပေးပါမည်။</p>
+    <p class="text-sm text-slate-500 mt-1">အချိန်ကို စာရင်းထဲမှ ရွေးလိုက်ရုံဖြင့် ဆေးသောက်ချိန်ဇယား အလိုအလျောက် ပြန်တွက်ပေးပါမည်။</p>
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
       <label class="block">
         <span class="text-sm font-medium text-slate-600">☀️ အိပ်ရာထချိန်</span>
-        <input type="time" id="t-wake" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+        <select id="t-wake" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></select>
       </label>
       <label class="block">
         <span class="text-sm font-medium text-slate-600">🍳 မနက်စာ</span>
-        <input type="time" id="t-breakfast" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+        <select id="t-breakfast" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></select>
       </label>
       <label class="block">
         <span class="text-sm font-medium text-slate-600">🍚 နေ့လယ်စာ</span>
-        <input type="time" id="t-lunch" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+        <select id="t-lunch" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></select>
       </label>
       <label class="block">
         <span class="text-sm font-medium text-slate-600">🍲 ညစာ</span>
-        <input type="time" id="t-dinner" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+        <select id="t-dinner" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></select>
       </label>
       <label class="block col-span-2 sm:col-span-1">
         <span class="text-sm font-medium text-slate-600">🌙 အိပ်ရာဝင်ချိန်</span>
-        <input type="time" id="t-bed" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+        <select id="t-bed" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></select>
       </label>
     </div>
     <div id="advisories" class="mt-3 space-y-2"></div>
@@ -494,7 +493,20 @@
 
   /* ---------- အချိန် ပြောင်းခြင်း ---------- */
   const FIELDS = ['wake', 'breakfast', 'lunch', 'dinner', 'bed'];
-  function fillInputs() { FIELDS.forEach(f => { $('#t-' + f).value = state.settings[f]; }); }
+  // ရွေးချယ်နိုင်သော အချိန်အပိုင်းအခြား (မိနစ် ၃၀ ခြား) — ရိုက်ထည့်စရာ မလိုပါ
+  const RANGES = { wake: [240, 840], breakfast: [300, 900], lunch: [600, 1080], dinner: [960, 1410], bed: [1200, 1680] };
+  const toHHMM = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+  function fillInputs() {
+    FIELDS.forEach(f => {
+      const el = $('#t-' + f), [from, to] = RANGES[f];
+      const cur = Math.round(toMin(state.settings[f]) / 30) * 30 % 1440;
+      const opts = [];
+      for (let m = from; m <= to; m += 30) opts.push(m % 1440);
+      if (!opts.includes(cur)) opts.unshift(cur);
+      el.innerHTML = opts.map(m => `<option value="${toHHMM(m)}">${fmtTime(m)}</option>`).join('');
+      el.value = state.settings[f] = toHHMM(cur);
+    });
+  }
   function afterTimeChange() {
     // အနာဂတ်သို့ ရွှေ့လိုက်သော အရာများအတွက် အသိပေးချက်ကို ပြန်ဖွင့်ပေးမည်
     const info = nowInfo(), day = getDay(info.key);
