@@ -687,11 +687,21 @@
     }, cloudError));
   }
 
+  const LOCAL_HOST = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+  const ON_PHONE = /android|iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /macintosh/i.test(navigator.userAgent));
+  const INSTALLED = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
   async function signIn() {
     const { authM, auth } = cloud;
     if (!auth) return;
     const provider = new authM.GoogleAuthProvider();
     cloud.error = null; $('#gateErr').textContent = '';
+    // ဖုန်းနှင့် ထည့်သွင်းထားသော app တွင် popup မယုံကြည်ရသဖြင့် စာမျက်နှာပြောင်း၍ ဝင်သည့်နည်းကို သုံးမည်
+    if (!LOCAL_HOST && (ON_PHONE || INSTALLED)) {
+      $('#gateStatus').textContent = 'Google သို့ သွားနေပါသည်…';
+      authM.signInWithRedirect(auth, provider).catch(cloudError);
+      return;
+    }
     try { await authM.signInWithPopup(auth, provider); }
     catch (e) {
       if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment'].includes(e.code)) authM.signInWithRedirect(auth, provider).catch(cloudError);
@@ -724,8 +734,11 @@
   }
 
   async function cloudInit() {
-    const cfg = window.FIREBASE_CONFIG;
+    let cfg = window.FIREBASE_CONFIG;
     if (!cfg || !cfg.apiKey) { unlock(); return; } // config မရှိလျှင် login မလိုဘဲ ဤစက်ထဲတွင်သာ သုံးမည်
+    // Login စာမျက်နှာကို ဤ site ၏ ကိုယ်ပိုင် domain မှတစ်ဆင့် သွားစေသည် (netlify.toml ထဲရှိ /__/auth/* proxy)။
+    // ထိုသို့မလုပ်လျှင် iPhone နှင့် ဖုန်း browser များတွင် "missing initial state" အမှားဖြင့် login မဝင်နိုင်ပါ။
+    if (!LOCAL_HOST) cfg = { ...cfg, authDomain: location.host };
     gate('checking');
     $('#accountBox').classList.remove('hidden');
     renderAccount();

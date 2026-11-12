@@ -1,13 +1,21 @@
 [build]
   publish = "."
 
+# Serve Firebase's login helper pages from this site's own domain. Phones block the
+# cross-site storage that login needs when these pages live on firebaseapp.com.
+[[redirects]]
+  from = "/__/auth/*"
+  to = "https://pills-reminder-5f053.firebaseapp.com/__/auth/:splat"
+  status = 200
+  force = true
+
 # Security headers for every file. (The page's main Content-Security-Policy is a <meta>
 # tag in index.html; frame-ancestors can only be sent as a header, so it lives here.)
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "frame-ancestors 'none'"
-    X-Frame-Options = "DENY"
+    Content-Security-Policy = "frame-ancestors 'self'"
+    X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"

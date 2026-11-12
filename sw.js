@@ -1,6 +1,6 @@
 // Service worker: makes the app installable, lets it open offline, and lets the page
 // show notifications on mobile browsers (Android Chrome requires a service worker for that).
-const CACHE = 'med-tracker-v5';
+const CACHE = 'med-tracker-v6';
 const CORE = [
   './',
   'app.js',
@@ -42,6 +42,8 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET' || !req.url.startsWith('http')) return;
   const host = new URL(req.url).hostname;
   const own = host === self.location.hostname;
+  // Firebase's login pages (proxied under /__/auth/) must always come live from the network.
+  if (own && new URL(req.url).pathname.startsWith('/__/')) return;
   if (!own && !CACHED_HOSTS.includes(host)) return;
 
   const store = res => {
