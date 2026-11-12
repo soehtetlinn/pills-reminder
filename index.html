@@ -41,11 +41,13 @@
       display: grid; gap: 1.5rem; align-items: start;
       grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
       grid-template-rows: auto auto auto auto 1fr auto;
-      grid-template-areas: "progress progress" "settings timeline" "prn timeline" "history timeline" "warnings timeline" "footer footer";
+      grid-template-areas: "step timeline" "prn timeline" "settings timeline" "warnings timeline" "history timeline" "footer footer";
     }
-    .area-progress { grid-area: progress; } .area-settings { grid-area: settings; } .area-timeline { grid-area: timeline; }
+    .area-step { grid-area: step; } .area-settings { grid-area: settings; } .area-timeline { grid-area: timeline; }
     .area-prn { grid-area: prn; } .area-history { grid-area: history; } .area-warnings { grid-area: warnings; } .area-footer { grid-area: footer; }
   }
+  summary::-webkit-details-marker { display: none; }
+  details[open] > summary .chev { transform: rotate(180deg); }
   @keyframes pop { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
   @keyframes slideIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
   .pop { animation: pop .22s ease-out; }
@@ -59,7 +61,7 @@
 
 <!-- ခေါင်းစီး -->
 <header class="bg-gradient-to-br from-teal-700 via-teal-600 to-cyan-600 text-white">
-  <div class="max-w-3xl lg:max-w-6xl mx-auto safe-x safe-top pb-20">
+  <div class="max-w-xl lg:max-w-6xl mx-auto safe-x safe-top pb-20">
     <div class="flex items-start justify-between gap-3">
       <div>
         <p class="text-teal-100 text-sm" id="todayDate"></p>
@@ -74,34 +76,50 @@
   </div>
 </header>
 
-<main class="layout max-w-3xl lg:max-w-6xl mx-auto safe-x safe-bottom -mt-14 flex flex-col gap-5">
+<main class="layout max-w-xl lg:max-w-6xl mx-auto safe-x safe-bottom -mt-14 flex flex-col gap-4">
 
-  <!-- ယနေ့ တိုးတက်မှု + နောက်တစ်ခု -->
-  <section class="area-progress bg-white rounded-2xl shadow-lg shadow-teal-900/10 p-5">
-    <div class="flex items-center justify-between gap-4">
-      <div class="min-w-0">
-        <p class="text-sm text-slate-500">ယနေ့ ဆေးသောက်ပြီးမှု</p>
-        <p class="text-2xl font-bold text-teal-700" id="progressText"></p>
-      </div>
-      <div class="text-right min-w-0">
-        <p class="text-sm text-slate-500">နောက်တစ်ခု</p>
-        <p class="font-semibold text-slate-800 truncate" id="nextTitle"></p>
-        <p class="text-sm" id="nextWhen"></p>
-      </div>
+  <!-- ယခု လုပ်ရမည့် အဆင့် (တစ်ဆင့်ချင်း) -->
+  <section class="area-step bg-white rounded-3xl shadow-lg shadow-teal-900/10 p-5 sm:p-6">
+    <div class="flex items-center justify-between gap-3">
+      <p class="text-sm font-semibold text-teal-700" id="stepCount"></p>
+      <p class="text-sm text-slate-500" id="progressText"></p>
     </div>
-    <div class="mt-3 h-3 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-label="ယနေ့ ဆေးသောက်ပြီးမှု">
-      <div id="progressBar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-500" style="width:0%"></div>
+    <div id="stepDots" class="mt-2 flex gap-1.5" aria-hidden="true"></div>
+    <div id="stepCard" class="mt-6"></div>
+    <div id="notifNudge" class="hidden mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+      <p class="text-sm text-slate-600">🔔 အချိန်ကျတိုင်း အသိပေးစေလိုပါသလား?</p>
+      <button data-action="enable-notif" class="rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 font-medium px-4 py-2 text-sm">ဖွင့်မည်</button>
     </div>
   </section>
 
-  <!-- အချိန် သတ်မှတ်ရန် -->
-  <section class="area-settings bg-white rounded-2xl shadow-sm p-5">
-    <div class="flex items-center justify-between gap-3 flex-wrap">
-      <h2 class="text-lg font-bold text-slate-800">⏰ ကျွန်ုပ်၏ နေ့စဉ်အချိန်များ</h2>
-      <button data-action="reset-times" class="text-sm text-teal-700 hover:text-teal-900 underline underline-offset-4">မူလအချိန်သို့ ပြန်ထားမည်</button>
+  <!-- လိုအပ်မှသောက်ရန် -->
+  <section class="area-prn bg-white rounded-2xl shadow-sm p-5 border-l-4 border-violet-400">
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+      <div class="min-w-0">
+        <span class="inline-block text-xs font-semibold bg-violet-100 text-violet-700 rounded-full px-2.5 py-0.5">လိုအပ်မှသာ သောက်ရန် (PRN)</span>
+        <h2 class="text-lg font-bold mt-1">🧴 Gaviscon (ဆေးရည်)</h2>
+        <p class="text-sm text-slate-600">ရင်ပူခြင်း၊ အက်ဆစ်ပြန်တက်ခြင်း ခံစားရမှသာ ဆရာဝန်ညွှန်ကြားထားသည့် ပမာဏအတိုင်း သောက်ပါ။</p>
+      </div>
+      <button data-action="prn-add" class="rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2.5 text-sm shrink-0">＋ ယခု သောက်လိုက်သည်</button>
     </div>
-    <p class="text-sm text-slate-500 mt-1">အချိန်ကို စာရင်းထဲမှ ရွေးလိုက်ရုံဖြင့် ဆေးသောက်ချိန်ဇယား အလိုအလျောက် ပြန်တွက်ပေးပါမည်။</p>
-    <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-2 gap-3 mt-4">
+    <div id="prnLog" class="mt-3"></div>
+  </section>
+
+  <!-- ယနေ့ ဇယားအပြည့် -->
+  <details id="timelineBox" class="area-timeline bg-white rounded-2xl shadow-sm">
+    <summary class="list-none cursor-pointer select-none flex items-center justify-between gap-3 px-5 py-4 font-bold text-slate-800"><span>📋 ယနေ့ ဇယားအပြည့် ကြည့်ရန်</span><span class="chev text-slate-400 text-xl leading-none transition-transform">⌄</span></summary>
+    <div class="px-4 pb-4"><ol id="timeline" class="space-y-3"></ol></div>
+  </details>
+
+  <!-- အချိန် သတ်မှတ်ရန် -->
+  <details class="area-settings bg-white rounded-2xl shadow-sm">
+    <summary class="list-none cursor-pointer select-none flex items-center justify-between gap-3 px-5 py-4 font-bold text-slate-800"><span>⚙️ အချိန်များ ပြင်ရန်</span><span class="chev text-slate-400 text-xl leading-none transition-transform">⌄</span></summary>
+    <div class="px-5 pb-5">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <p class="text-sm text-slate-500">စာရင်းထဲမှ ရွေးလိုက်ရုံဖြင့် ဇယားကို ပြန်တွက်ပေးပါမည်။</p>
+        <button data-action="reset-times" class="text-sm text-teal-700 hover:text-teal-900 underline underline-offset-4">မူလအချိန်သို့ ပြန်ထားမည်</button>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3 mt-4">
       <label class="block">
         <span class="text-sm font-medium text-slate-600">☀️ အိပ်ရာထချိန်</span>
         <select id="t-wake" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></select>
@@ -140,30 +158,13 @@
       </div>
       <button id="notifBtn" data-action="enable-notif" class="rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-4 py-2.5 text-sm">အသိပေးချက် ဖွင့်မည်</button>
     </div>
-  </section>
-
-  <!-- ယနေ့ အချိန်ဇယား -->
-  <section class="area-timeline">
-    <h2 class="text-lg font-bold text-slate-800 px-1 mb-3">📋 ယနေ့ အချိန်ဇယား</h2>
-    <ol id="timeline" class="space-y-3"></ol>
-  </section>
-
-  <!-- လိုအပ်မှသောက်ရန် -->
-  <section class="area-prn bg-white rounded-2xl shadow-sm p-5 border-l-4 border-violet-400">
-    <div class="flex items-start justify-between gap-3 flex-wrap">
-      <div class="min-w-0">
-        <span class="inline-block text-xs font-semibold bg-violet-100 text-violet-700 rounded-full px-2.5 py-0.5">လိုအပ်မှသာ သောက်ရန် (PRN)</span>
-        <h2 class="text-lg font-bold mt-1">🧴 Gaviscon (ဆေးရည်)</h2>
-        <p class="text-sm text-slate-600">ရင်ပူခြင်း၊ အက်ဆစ်ပြန်တက်ခြင်း ခံစားရမှသာ ဆရာဝန်ညွှန်ကြားထားသည့် ပမာဏအတိုင်း သောက်ပါ။</p>
-      </div>
-      <button data-action="prn-add" class="rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2.5 text-sm shrink-0">＋ ယခု သောက်လိုက်သည်</button>
     </div>
-    <div id="prnLog" class="mt-3"></div>
-  </section>
+  </details>
 
   <!-- ဆေးဘက်ဆိုင်ရာ သတိပေးချက်များ -->
-  <section class="area-warnings bg-rose-50 border border-rose-200 rounded-2xl p-5">
-    <h2 class="text-lg font-bold text-rose-800">⚠️ အရေးကြီး သတိပေးချက်များ</h2>
+  <details class="area-warnings bg-rose-50 border border-rose-200 rounded-2xl">
+    <summary class="list-none cursor-pointer select-none flex items-center justify-between gap-3 px-5 py-4 font-bold text-rose-800"><span>⚠️ အရေးကြီး သတိပေးချက်များ</span><span class="chev text-slate-400 text-xl leading-none transition-transform">⌄</span></summary>
+    <div class="px-5 pb-5">
     <ul class="mt-3 space-y-2.5 text-sm text-rose-900">
       <li class="flex gap-2"><span>🌙</span><span><b>Clonazepam (Prenarpil 0.5 mg)</b> ကို တစ်နေ့ တစ်ကြိမ်တည်း၊ <b>အိပ်ရာဝင်ချိန်တွင်သာ</b> သောက်ပါ။ နေ့ခင်းဘက် လုံးဝ မသောက်ပါနှင့်။</span></li>
       <li class="flex gap-2"><span>🚫</span><span><b>အရက် လုံးဝ မသောက်ပါနှင့်။</b> Clonazepam၊ Myonal တို့နှင့် အရက်တွဲမိပါက အလွန်အမင်း ငိုက်မျဉ်းခြင်း၊ မူးဝေခြင်းနှင့် အသက်ရှူနှေးခြင်းတို့ ဖြစ်နိုင်ပါသည်။</span></li>
@@ -172,13 +173,14 @@
       <li class="flex gap-2"><span>🩺</span><span>ဆရာဝန် မညွှန်ကြားဘဲ ဆေးပမာဏ မတိုးပါနှင့်၊ မလျှော့ပါနှင့်၊ Clonazepam ကို ရုတ်တရက် မဖြတ်ပါနှင့်။</span></li>
       <li class="flex gap-2"><span>🍽️</span><span><b>Miracid</b> နှင့် <b>Domp-M</b> ကို ဗိုက်ထဲ အစာမရှိချိန် (မနက်စာ မစားမီ) သောက်ပါ။ <b>Myonal</b> ကို အစာစားပြီးမှ သောက်ပါ။</span></li>
     </ul>
-  </section>
+    </div>
+  </details>
 
   <!-- ၇ ရက် မှတ်တမ်း -->
-  <section class="area-history bg-white rounded-2xl shadow-sm p-5">
-    <h2 class="text-lg font-bold text-slate-800">📊 လွန်ခဲ့သော ၇ ရက် မှတ်တမ်း</h2>
-    <div id="history" class="mt-4 grid grid-cols-7 gap-2 items-end"></div>
-  </section>
+  <details class="area-history bg-white rounded-2xl shadow-sm">
+    <summary class="list-none cursor-pointer select-none flex items-center justify-between gap-3 px-5 py-4 font-bold text-slate-800"><span>📊 လွန်ခဲ့သော ၇ ရက် မှတ်တမ်း</span><span class="chev text-slate-400 text-xl leading-none transition-transform">⌄</span></summary>
+    <div class="px-5 pb-5"><div id="history" class="grid grid-cols-7 gap-2 items-end"></div></div>
+  </details>
 
   <footer class="area-footer text-center text-xs text-slate-500 px-4 leading-relaxed">
     ဤအက်ပ်သည် သတိပေးရန်အတွက်သာ ဖြစ်ပြီး ဆရာဝန်၏ ညွှန်ကြားချက်ကို အစားမထိုးနိုင်ပါ။ သံသယရှိပါက သင့်ဆရာဝန် သို့မဟုတ် ဆေးဝါးကျွမ်းကျင်သူနှင့် တိုင်ပင်ပါ။<br>
@@ -199,17 +201,19 @@
   'use strict';
 
   /* ---------- အခြေခံ အချက်အလက် ---------- */
-  const DEFAULTS = { wake: '10:00', breakfast: '10:30', lunch: '14:00', dinner: '19:00', bed: '01:00' };
+  const DEFAULTS = { wake: '10:00', breakfast: '10:30', lunch: '15:00', dinner: '20:00', bed: '01:00' };
   const STORE_KEY = 'med-meal-tracker-v1';
   const MISSED_AFTER = 60;   // မိနစ် — ဤမျှကျော်လျှင် "လွတ်သွားပြီ" ဟု သတ်မှတ်
+  const MYONAL_GAP = 240;    // မိနစ် — Myonal တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားရန်
+  const CLONA_GAP = 120;     // မိနစ် — ညစာနှင့် Clonazepam အနည်းဆုံး ၂ နာရီ ခြားရန်
   const NOTIFY_WINDOW = 30;  // မိနစ် — အချိန်ကျပြီး ဤအတွင်းသာ အသိပေး
 
   const C_STOMACH = 'အစာအိမ်အက်ဆစ်ပြန်တက်ခြင်း၊ ရင်ပူခြင်း၊ လည်ပင်းတစ်စို့ဖြစ်ခြင်းနှင့် လေတက်ခြင်းများ ဆိုးရွားစွာ ပြန်ဖြစ်လာနိုင်ပါသည်။';
   const MEDS = {
     miracid: { name: 'Miracid', sub: 'Omeprazole', icon: '💊', rule: 'ဗိုက်ထဲ အစာမရှိချိန် — မနက်စာ မစားမီ သောက်ရန်', consequence: C_STOMACH },
     domp:    { name: 'Domp-M', sub: 'အော့အန်/လေတက် သက်သာဆေး', icon: '💊', rule: 'ဗိုက်ထဲ အစာမရှိချိန် — မနက်စာ မစားမီ သောက်ရန်', consequence: C_STOMACH },
-    myonal:  { name: 'Myonal', sub: 'Eperisone 50 mg · ကြွက်သားလျော့ဆေး', icon: '💪', rule: 'အစာစားပြီးမှ သောက်ရန် (တစ်နေ့ ၃ ကြိမ်)', consequence: 'ကျောအောင့်ခြင်း၊ ကြွက်သားတင်းခြင်းနှင့် ခန္ဓာကိုယ် တောင့်တင်းကိုက်ခဲမှုများ ပြန်ဖြစ်လာနိုင်ပါသည်။' },
-    clona:   { name: 'Clonazepam', sub: 'Prenarpil 0.5 mg', icon: '🌙', rule: 'တစ်နေ့ တစ်ကြိမ်တည်း — အိပ်ရာဝင်ချိန်တွင်သာ သောက်ရန်', consequence: 'ညဘက် အိပ်မပျော်ခြင်း၊ စိုးရိမ်ပူပန်မှုများ မြင့်တက်ခြင်းနှင့် အိပ်ရေးပျက်ခြင်းတို့ ဖြစ်စေနိုင်ပါသည်။' }
+    myonal:  { name: 'Myonal', sub: 'Eperisone 50 mg · ကြွက်သားလျော့ဆေး', icon: '💪', rule: 'အစာစားပြီးမှ သောက်ရန် (တစ်နေ့ ၃ ကြိမ်၊ တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားရန်)', consequence: 'ကျောအောင့်ခြင်း၊ ကြွက်သားတင်းခြင်းနှင့် ခန္ဓာကိုယ် တောင့်တင်းကိုက်ခဲမှုများ ပြန်ဖြစ်လာနိုင်ပါသည်။' },
+    clona:   { name: 'Clonazepam', sub: 'Prenarpil 0.5 mg', icon: '🌙', rule: 'တစ်နေ့ တစ်ကြိမ်၊ ၁ လုံးတည်း — အိပ်ခါနီးမှသာ သီးသန့်သောက်ရန် (ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်)', consequence: 'ညဘက် အိပ်မပျော်ခြင်း၊ စိုးရိမ်ပူပန်မှုများ မြင့်တက်ခြင်းနှင့် အိပ်ရေးပျက်ခြင်းတို့ ဖြစ်စေနိုင်ပါသည်။' }
   };
   const MEALS = {
     breakfast: { name: 'မနက်စာ', icon: '🍳' },
@@ -239,10 +243,17 @@
   const keyToDate = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
 
   /* ---------- သိမ်းဆည်းမှု ---------- */
-  let state = { settings: { ...DEFAULTS }, days: {} };
+  let state = { v: 2, settings: { ...DEFAULTS }, days: {} };
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (saved && saved.settings) state = { settings: { ...DEFAULTS, ...saved.settings }, days: saved.days || {} };
+    if (saved && saved.settings) {
+      state = { v: 2, settings: { ...DEFAULTS, ...saved.settings }, days: saved.days || {} };
+      // ယခင် version ၏ မူလအချိန်များသည် တစ်ခုနှင့်တစ်ခု နီးလွန်းသဖြင့် အသစ်သို့ ပြောင်းပေးမည်
+      if (!saved.v || saved.v < 2) {
+        if (state.settings.lunch === '14:00') state.settings.lunch = DEFAULTS.lunch;
+        if (state.settings.dinner === '19:00') state.settings.dinner = DEFAULTS.dinner;
+      }
+    }
   } catch (e) { /* သိမ်းထားချက် မရှိ/မဖတ်နိုင် — မူလတန်ဖိုးသုံးမည် */ }
 
   function save() {
@@ -273,22 +284,38 @@
   function buildSchedule(day) {
     const s = state.settings, wake = toMin(s.wake);
     const n = m => (m < wake ? m + 1440 : m);
-    const meal = { breakfast: n(toMin(s.breakfast)), lunch: n(toMin(s.lunch)), dinner: n(toMin(s.dinner)) };
-    // အစာစားပြီးကြောင်း မှတ်ထားလျှင် ထိုအချိန်မှစ၍ Myonal သောက်နိုင်ပြီ၊ မဟုတ်လျှင် အစာစားချိန် + မိနစ် ၃၀
-    const after = id => (day.meals[id] != null ? day.meals[id] : meal[id] + 30);
-    const items = [
-      { id: 'wake', type: 'info', time: wake, title: 'အိပ်ရာထချိန်', icon: '☀️' },
-      { id: 'miracid', type: 'dose', med: 'miracid', time: wake, when: 'အိပ်ရာထထချင်း' },
-      { id: 'domp', type: 'dose', med: 'domp', time: wake, when: 'အိပ်ရာထထချင်း' },
-      { id: 'breakfast', type: 'meal', time: meal.breakfast },
-      { id: 'myonal1', type: 'dose', med: 'myonal', time: after('breakfast'), when: 'မနက်စာ စားပြီး' },
-      { id: 'lunch', type: 'meal', time: meal.lunch },
-      { id: 'myonal2', type: 'dose', med: 'myonal', time: after('lunch'), when: 'နေ့လယ်စာ စားပြီး' },
-      { id: 'dinner', type: 'meal', time: meal.dinner },
-      { id: 'myonal3', type: 'dose', med: 'myonal', time: after('dinner'), when: 'ညစာ စားပြီး' },
-      { id: 'clona', type: 'dose', med: 'clona', time: n(toMin(s.bed)), when: 'အိပ်ရာဝင်ချိန်' }
-    ];
-    items.forEach((it, i) => { it.order = i; });
+    const eaten = id => day.meals[id];
+    const items = [];
+    const add = it => { it.order = items.length; items.push(it); };
+
+    add({ id: 'wake', type: 'info', time: wake, title: 'အိပ်ရာထချိန်', icon: '☀️' });
+    add({ id: 'miracid', type: 'dose', med: 'miracid', time: wake, when: 'အိပ်ရာထထချင်း' });
+    add({ id: 'domp', type: 'dose', med: 'domp', time: wake, when: 'အိပ်ရာထထချင်း' });
+
+    // အစာတစ်နပ်နှင့်တစ်နပ်၊ Myonal တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားအောင် အစဉ်လိုက် တွက်သည်။
+    // အစာ သို့မဟုတ် ဆေးကို နောက်ကျမှ စား/သောက်ခဲ့လျှင် နောက်အကြိမ်များကို အလိုအလျောက် နောက်ရွှေ့ပေးသည်။
+    const WHEN = { breakfast: 'မနက်စာ စားပြီး', lunch: 'နေ့လယ်စာ စားပြီး', dinner: 'ညစာ စားပြီး' };
+    let prevMeal = null, prevDose = null, lastMeal = 0;
+    ['breakfast', 'lunch', 'dinner'].forEach((mealId, i) => {
+      const set = n(toMin(s[mealId]));
+      const planned = prevMeal == null ? set : Math.max(set, prevMeal + MYONAL_GAP);
+      const mealTime = eaten(mealId) != null ? eaten(mealId) : planned;
+      add({ id: mealId, type: 'meal', time: mealTime, shifted: eaten(mealId) == null && planned > set });
+
+      const doseId = 'myonal' + (i + 1), rec = day.doses[doseId];
+      const base = eaten(mealId) != null ? mealTime : mealTime + 30;
+      const doseTime = prevDose == null ? base : Math.max(base, prevDose + MYONAL_GAP);
+      add({ id: doseId, type: 'dose', med: 'myonal', time: doseTime, when: WHEN[mealId], meal: mealId, shifted: doseTime > base ? 'myonal' : null });
+
+      // နောက်အကြိမ်အတွက် ကိုးကားမည့်အချိန် — တကယ်သောက်ခဲ့သောအချိန်၊ မသောက်ရသေးလျှင် စီစဉ်ထားချိန်၊ ကျော်ခဲ့လျှင် မထည့်တွက်
+      if (!rec) prevDose = doseTime;
+      else if (rec.status === 'taken') prevDose = rec.min;
+      prevMeal = mealTime; lastMeal = mealTime;
+    });
+
+    const bed = n(toMin(s.bed)), clonaTime = Math.max(bed, lastMeal + CLONA_GAP);
+    add({ id: 'clona', type: 'dose', med: 'clona', time: clonaTime, when: 'အိပ်ခါနီး', shifted: clonaTime > bed ? 'clona' : null });
+
     return items.sort((a, b) => a.time - b.time || a.order - b.order);
   }
 
@@ -311,29 +338,58 @@
     $('#todayDate').textContent = `${WEEKDAYS[info.date.getDay()]}နေ့ · ${bn(info.date.getDate())} ${MONTHS[info.date.getMonth()]} ${bn(info.date.getFullYear())}`;
     $('#clock').textContent = fmtTime(info.real.getHours() * 60 + info.real.getMinutes());
 
-    // တိုးတက်မှု
+    // တစ်ဆင့်ချင်း — မပြီးသေးသော ပထမဆုံးအရာကိုသာ အဓိကပြမည်
+    const steps = items.filter(it => it.type !== 'info');
+    const pending = it => ['due', 'upcoming', 'missed'].includes(statusOf(it, day, now));
+    const cur = steps.find(pending);
     const taken = Object.values(day.doses).filter(r => r.status === 'taken').length;
-    $('#progressText').textContent = `${bn(taken)} / ${bn(TOTAL_DOSES)} ကြိမ်`;
-    $('#progressBar').style.width = `${Math.round(taken / TOTAL_DOSES * 100)}%`;
-
-    // နောက်တစ်ခု
-    const next = items.find(it => it.type !== 'info' && ['due', 'upcoming', 'missed'].includes(statusOf(it, day, now)));
-    const nt = $('#nextTitle'), nw = $('#nextWhen');
-    if (!next) {
-      nt.textContent = 'ယနေ့အတွက် ပြီးပါပြီ 🎉'; nw.textContent = ''; nw.className = 'text-sm';
-    } else {
-      nt.textContent = titleOf(next);
-      const st = statusOf(next, day, now);
-      if (st === 'missed') { nw.textContent = 'လွတ်နေပါသည်'; nw.className = 'text-sm font-semibold text-rose-600'; }
-      else if (st === 'due') { nw.textContent = 'အချိန်ကျပါပြီ'; nw.className = 'text-sm font-semibold text-amber-600'; }
-      else { nw.textContent = `${fmtDur(next.time - now)} အကြာတွင်`; nw.className = 'text-sm text-slate-500'; }
-    }
+    $('#stepCount').textContent = cur ? `အဆင့် ${bn(steps.indexOf(cur) + 1)} / ${bn(steps.length)}` : 'အားလုံး ပြီးပါပြီ';
+    $('#progressText').textContent = `ဆေး ${bn(taken)}/${bn(TOTAL_DOSES)} ကြိမ် သောက်ပြီး`;
+    $('#stepDots').innerHTML = steps.map(it => {
+      const st = statusOf(it, day, now);
+      const c = it === cur ? (st === 'missed' ? 'bg-rose-500' : 'bg-amber-400') : st === 'taken' || st === 'done' ? 'bg-emerald-500' : st === 'skipped' ? 'bg-slate-400' : st === 'missed' ? 'bg-rose-300' : 'bg-slate-200';
+      return `<span class="h-2 flex-1 rounded-full ${c}"></span>`;
+    }).join('');
+    $('#stepCard').innerHTML = stepHTML(cur, day, now);
 
     $('#timeline').innerHTML = items.map(it => itemHTML(it, day, now)).join('');
     renderAdvisories();
     renderPrn(day);
     renderHistory(info.key);
     renderNotifState();
+  }
+
+  function stepHTML(it, day, now) {
+    if (!it) {
+      return `<div class="text-center py-4">
+        <div class="mx-auto w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-4xl">🎉</div>
+        <h2 class="mt-3 text-2xl font-bold text-emerald-700">ယနေ့အတွက် အားလုံး ပြီးပါပြီ</h2>
+        <p class="text-slate-500 mt-1">မနက်ဖြန် အိပ်ရာထချိန်တွင် အဆင့် ၁ မှ ပြန်စပါမည်။</p>
+      </div>`;
+    }
+    const st = statusOf(it, day, now), isMeal = it.type === 'meal';
+    const info = isMeal ? MEALS[it.id] : MEDS[it.med];
+    const status = st === 'missed' ? ['လွတ်နေပါသည် — သတိရသည်နှင့် သောက်ပါ', 'text-rose-600', 'bg-rose-50']
+      : st === 'due' ? ['ယခု အချိန်ကျပါပြီ', 'text-amber-600', 'bg-amber-50']
+      : [`အချိန်မကျသေးပါ — ${fmtDur(it.time - now)} အကြာတွင်`, 'text-slate-500', 'bg-slate-100'];
+    const shifted = it.shifted
+      ? `<p class="text-xs text-sky-700 mt-1">⏱ ${isMeal ? 'ယခင်အစာနှင့် ၄ နာရီ ခြားရန်' : it.shifted === 'myonal' ? 'ယခင် Myonal နှင့် အနည်းဆုံး ၄ နာရီ ခြားရန်' : 'ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်'} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : '';
+    const big = 'w-full rounded-2xl font-semibold text-lg py-4 transition-colors';
+    const buttons = isMeal
+      ? `<button data-action="meal-done" data-id="${it.id}" class="${big} bg-sky-600 hover:bg-sky-700 text-white">✓ စားပြီးပြီ</button>`
+      : `<button data-action="dose-take" data-id="${it.id}" class="${big} bg-teal-600 hover:bg-teal-700 text-white">✓ သောက်ပြီးပြီ</button>
+         <button data-action="dose-skip" data-id="${it.id}" class="w-full rounded-2xl py-3 text-slate-500 hover:bg-slate-50">ဒီတစ်ကြိမ် ကျော်မည်</button>`;
+    return `<div class="text-center">
+      <div class="mx-auto w-20 h-20 rounded-full ${status[2]} flex items-center justify-center text-4xl ${st === 'due' ? 'ring-pulse' : ''}">${info.icon}</div>
+      <p class="mt-3 text-sm font-semibold ${status[1]}">${status[0]}</p>
+      <h2 class="text-2xl font-bold text-slate-900 mt-1">${info.name}</h2>
+      ${isMeal ? '' : `<p class="text-sm text-slate-500">${info.sub}</p>`}
+      <p class="mt-3 text-lg font-semibold text-slate-800">${fmtTime(it.time)}</p>
+      <p class="text-sm text-slate-600">${isMeal ? 'အစာစားချိန် — စားပြီးလျှင် နောက်အဆင့်တွင် Myonal သောက်ရန် ပြပါမည်' : `${it.when} · ${info.rule}`}</p>
+      ${shifted}
+      ${st === 'missed' && !isMeal ? `<div class="mt-3 rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-900 text-left"><b>⚠️ မသောက်ရင် ဖြစ်မည့်ဆိုးကျိုး —</b> ${info.consequence}</div>` : ''}
+      <div class="mt-5 space-y-1">${buttons}</div>
+    </div>`;
   }
 
   function itemHTML(it, day, now) {
@@ -353,6 +409,7 @@
             <div class="min-w-0">
               <p class="font-semibold text-slate-800">${m.icon} ${m.name}</p>
               <p class="text-sm ${done ? 'text-emerald-700' : st === 'due' ? 'text-amber-700' : 'text-slate-500'}">${done ? `✓ ${fmtTime(day.meals[it.id])} တွင် စားပြီး` : st === 'due' ? 'အစာစားချိန် ရောက်ပါပြီ' : 'အစာစားချိန်'}</p>
+              ${it.shifted ? '<p class="text-xs text-sky-700">⏱ ယခင်အစာနှင့် ၄ နာရီ ခြားရန် အချိန်ကို နောက်ရွှေ့ထားသည်</p>' : ''}
             </div>
             ${done
               ? `<button data-action="meal-undo" data-id="${it.id}" class="text-sm text-slate-500 underline underline-offset-4">ပြန်ပြင်မည်</button>`
@@ -390,6 +447,7 @@
           ${badge}
         </div>
         <p class="text-sm text-slate-600">${it.when} · ${med.rule}</p>
+        ${!rec && it.shifted ? `<p class="text-xs text-sky-700 mt-1">⏱ ${it.shifted === 'myonal' ? 'ယခင် Myonal နှင့် အနည်းဆုံး ၄ နာရီ ခြားရန်' : 'ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်'} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : ''}
         ${warn}
         <div class="mt-2.5 flex items-center gap-2 flex-wrap">${actions}</div>
       </div></li>`;
@@ -401,7 +459,9 @@
     const out = [];
     if (b - wake < 30) out.push('Miracid နှင့် Domp-M သည် အစာမစားမီ သောက်ရသောဆေးဖြစ်၍ အိပ်ရာထချိန်နှင့် မနက်စာကြား အနည်းဆုံး မိနစ် ၃၀ ခြားထားရန် အကြံပြုပါသည်။');
     if (!(b < l && l < d)) out.push('အစာစားချိန်များ အစဉ်လိုက် မဖြစ်နေပါ — မနက်စာ၊ နေ့လယ်စာ၊ ညစာ အစီအစဉ်အတိုင်း ပြန်စစ်ပါ။');
+    else if (l - b < MYONAL_GAP || d - l < MYONAL_GAP) out.push('အစာစားချိန်များကြား ၄ နာရီ မခြားပါ — Myonal တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားစေရန် ဇယားထဲတွင် အချိန်ကို အလိုအလျောက် နောက်ရွှေ့ပေးထားပါသည်။');
     if (bed <= d) out.push('အိပ်ရာဝင်ချိန်သည် ညစာထက် စောနေပါသည် — အချိန်ကို ပြန်စစ်ပါ။');
+    else if (bed - d < CLONA_GAP) out.push('ညစာနှင့် အိပ်ရာဝင်ချိန်ကြား ၂ နာရီ မခြားပါ — Clonazepam သောက်ချိန်ကို ညစာပြီး ၂ နာရီအကြာသို့ ရွှေ့ပေးထားပါသည်။');
     $('#advisories').innerHTML = out.map(t => `<p class="rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm px-3 py-2">💡 ${t}</p>`).join('');
   }
 
@@ -477,8 +537,24 @@
         });
         return;
       }
+      // Myonal ကို ယခင်အကြိမ်နှင့် ၄ နာရီ မခြားဘဲ သောက်ရန် ကြိုးစားလျှင် သတိပေးမည်
+      if (it.med === 'myonal') {
+        const prev = ['myonal1', 'myonal2', 'myonal3'].filter(k => k !== id && day.doses[k] && day.doses[k].status === 'taken').map(k => day.doses[k].min);
+        const last = prev.length ? Math.max(...prev) : null;
+        if (last != null && info.min - last < MYONAL_GAP) {
+          openModal({
+            tone: 'rose', icon: '⏱', title: 'Myonal ကို ဆက်တိုက် မသောက်ပါနှင့်',
+            body: `<p>ယခင် Myonal ကို <b>${fmtTime(last)}</b> တွင် သောက်ထားပြီး <b>${fmtDur(info.min - last)}</b> သာ ရှိပါသေးသည်။</p><p>တစ်ကြိမ်နှင့်တစ်ကြိမ် <b>အနည်းဆုံး ၄ နာရီ</b> ခြားရပါမည်။ နောက်တစ်ကြိမ်ကို <b>${fmtTime(last + MYONAL_GAP)}</b> နောက်ပိုင်းမှ သောက်ပါ။</p>`,
+            actions: [
+              { label: `${fmtTime(last + MYONAL_GAP)} ကျမှ သောက်မည်`, primary: true },
+              { label: 'သောက်ပြီးသွားပြီ — မှတ်တမ်းတင်မည်', danger: true, fn: () => takeDose(id) }
+            ]
+          });
+          return;
+        }
+      }
       // Myonal ကို အစာမစားရသေးဘဲ သောက်ရန် ကြိုးစားလျှင် သတိပေးမည်
-      const mealId = { myonal1: 'breakfast', myonal2: 'lunch', myonal3: 'dinner' }[id];
+      const mealId = it.meal;
       if (mealId && day.meals[mealId] == null) {
         openModal({
           tone: 'amber', icon: '🍽️', title: `${MEALS[mealId].name} စားပြီးပြီလား?`,
@@ -568,6 +644,7 @@
     } else {
       txt.textContent = 'ဆေးသောက်ချိန်၊ အစာစားချိန် ရောက်တိုင်း အသိပေးရန် ဖွင့်ပါ။'; btn.classList.remove('hidden');
     }
+    $('#notifNudge').classList.toggle('hidden', !('Notification' in window) || Notification.permission !== 'default');
   }
   async function enableNotifications() {
     if (!('Notification' in window)) return;
@@ -599,13 +676,18 @@
     const el = document.createElement('div');
     el.className = `slide-in pointer-events-auto ${cls} text-white rounded-xl shadow-lg px-4 py-2.5 text-sm font-medium max-w-md w-full sm:w-auto`;
     el.textContent = text;
-    $('#toasts').appendChild(el);
+    $('#toasts').replaceChildren(el); // တစ်ကြိမ်လျှင် စာတန်းတစ်ခုသာ ပြမည်
     setTimeout(() => el.remove(), ms);
   }
 
   function checkReminders() {
     const info = nowInfo(), day = getDay(info.key), items = buildSchedule(day), now = info.min;
-    let changed = false;
+    let changed = false, ring = false;
+
+    // အချိန်ရွှေ့သွား၍ အနာဂတ်သို့ ရောက်သွားသော အရာများအတွက် အသိပေးချက်ကို ပြန်ဖွင့်ပေးမည်
+    items.forEach(it => {
+      if (it.time > now && (day.notified[it.id] || day.warned[it.id]) && !day.doses[it.id]) { delete day.notified[it.id]; delete day.warned[it.id]; changed = true; }
+    });
 
     // အချိန်ကျပြီ အသိပေးချက်
     items.forEach(it => {
@@ -615,9 +697,9 @@
       const body = it.type === 'meal' ? `${fmtTime(it.time)} — အစာစားပြီးနောက် Myonal သောက်ရန် မမေ့ပါနှင့်။` : `${it.when} · ${MEDS[it.med].rule}`;
       pushNotify(title, body, it.id);
       toast(title, 'amber', 9000);
-      day.notified[it.id] = true; changed = true;
+      day.notified[it.id] = true; changed = true; ring = true;
     });
-    if (changed) beep();
+    if (ring) beep();
 
     // လွတ်သွားသောဆေးများအတွက် ဆိုးကျိုး သတိပေး popup
     if (!modalOpen) {
@@ -662,6 +744,7 @@
 
   /* ---------- စတင်ခြင်း ---------- */
   function tick() { render(); checkReminders(); }
+  if (window.matchMedia('(min-width: 1024px)').matches) $('#timelineBox').open = true; // laptop တွင် ဇယားကို ဖွင့်ထားမည်
   fillInputs();
   tick();
   setInterval(tick, 15000);

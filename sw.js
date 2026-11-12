@@ -1,6 +1,6 @@
 // Service worker: makes the app installable, lets it open offline, and lets the page
 // show notifications on mobile browsers (Android Chrome requires a service worker for that).
-const CACHE = 'med-tracker-v1';
+const CACHE = 'med-tracker-v3';
 const CORE = [
   './',
   'manifest.webmanifest',
