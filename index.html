@@ -6,7 +6,13 @@
 <meta name="theme-color" content="#0f766e">
 <meta name="description" content="ဆေးသောက်ချိန်နှင့် အစားအစာ အချိန်ဇယား မှတ်တမ်း">
 <title>ဆေးနှင့် အစားအစာ အချိန်ဇယား</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ဆေးသောက်ချိန်">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -118,6 +124,14 @@
       </label>
     </div>
     <div id="advisories" class="mt-3 space-y-2"></div>
+
+    <div id="installRow" class="hidden mt-4 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+      <div class="min-w-0">
+        <p class="font-medium text-slate-700">📲 အက်ပ်အဖြစ် ထည့်သွင်းရန်</p>
+        <p class="text-sm text-slate-500" id="installHint">ဖုန်း၏ home screen တွင် အက်ပ်တစ်ခုကဲ့သို့ ထည့်ထားနိုင်ပါသည်။</p>
+      </div>
+      <button id="installBtn" data-action="install" class="rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-4 py-2.5 text-sm">ထည့်သွင်းမည်</button>
+    </div>
 
     <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
       <div class="min-w-0">
@@ -499,6 +513,7 @@
     else if (action === 'prn-remove') { day.prn.splice(+id, 1); }
     else if (action === 'reset-times') { state.settings = { ...DEFAULTS }; fillInputs(); afterTimeChange(); }
     else if (action === 'enable-notif') { enableNotifications(); return; }
+    else if (action === 'install') { installApp(); return; }
 
     save(); render();
   }
@@ -621,6 +636,28 @@
       }
     }
     if (changed) save();
+  }
+
+  /* ---------- အက်ပ်အဖြစ် ထည့်သွင်းခြင်း (PWA) ---------- */
+  let installEvent = null;
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); installEvent = e;
+    $('#installRow').classList.remove('hidden');
+  });
+  window.addEventListener('appinstalled', () => { installEvent = null; $('#installRow').classList.add('hidden'); });
+  // iPhone/iPad တွင် ထည့်သွင်းခလုတ် မပေါ်နိုင်၍ လုပ်နည်းကိုသာ ပြမည်
+  if (!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    $('#installHint').textContent = 'Safari ၏ Share (မျှဝေရန်) ခလုတ်ကို နှိပ်ပြီး "Add to Home Screen" ကို ရွေးပါ။';
+    $('#installBtn').classList.add('hidden');
+    $('#installRow').classList.remove('hidden');
+  }
+  async function installApp() {
+    if (!installEvent) return;
+    installEvent.prompt();
+    await installEvent.userChoice;
+    installEvent = null;
+    $('#installRow').classList.add('hidden');
   }
 
   /* ---------- စတင်ခြင်း ---------- */

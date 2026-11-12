@@ -1,0 +1,17 @@
+{
+  "name": "ဆေးနှင့် အစားအစာ အချိန်ဇယား",
+  "short_name": "ဆေးသောက်ချိန်",
+  "description": "ဆေးသောက်ချိန်နှင့် အစားအစာ အချိန်ဇယား မှတ်တမ်း",
+  "lang": "my",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f1f5f9",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

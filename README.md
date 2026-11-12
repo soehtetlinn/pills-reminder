@@ -1,7 +1,8 @@
 # ဆေးနှင့် အစားအစာ အချိန်ဇယား (Medication & Meal Routine Tracker)
 
 A Burmese-language daily medication and meal tracker. Static site: `index.html` holds the whole app
-(Tailwind via CDN + vanilla JavaScript); `sw.js` only enables notifications on mobile browsers.
+(Tailwind via CDN + vanilla JavaScript); `sw.js`, `manifest.webmanifest` and `icons/` make it an installable PWA that opens offline and can
+show notifications on mobile browsers.
 
 ## Run locally
 
