@@ -23,6 +23,23 @@
 <style>
   html { -webkit-text-size-adjust: 100%; }
   body { font-family: "Noto Sans Myanmar", Padauk, "Myanmar Text", Pyidaungsu, system-ui, sans-serif; line-height: 1.9; }
+  /* ဖုန်း၏ notch / Dynamic Island / home bar နေရာများကို ရှောင်ရန် */
+  .safe-x { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+  .safe-top { padding-top: calc(1.5rem + env(safe-area-inset-top)); }
+  .safe-bottom { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
+  .safe-toast { top: max(.75rem, env(safe-area-inset-top)); }
+  .safe-modal { padding-bottom: max(.75rem, env(safe-area-inset-bottom)); }
+  /* Laptop — ဘယ်ဘက်တွင် ဆက်တင်များ၊ ညာဘက်တွင် ယနေ့ဇယား */
+  @media (min-width: 1024px) {
+    main.layout.layout {
+      display: grid; gap: 1.5rem; align-items: start;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      grid-template-rows: auto auto auto auto 1fr auto;
+      grid-template-areas: "progress progress" "settings timeline" "prn timeline" "history timeline" "warnings timeline" "footer footer";
+    }
+    .area-progress { grid-area: progress; } .area-settings { grid-area: settings; } .area-timeline { grid-area: timeline; }
+    .area-prn { grid-area: prn; } .area-history { grid-area: history; } .area-warnings { grid-area: warnings; } .area-footer { grid-area: footer; }
+  }
   @keyframes pop { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
   @keyframes slideIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
   .pop { animation: pop .22s ease-out; }
@@ -36,7 +53,7 @@
 
 <!-- ခေါင်းစီး -->
 <header class="bg-gradient-to-br from-teal-700 via-teal-600 to-cyan-600 text-white">
-  <div class="max-w-3xl mx-auto px-4 pt-6 pb-20">
+  <div class="max-w-3xl lg:max-w-6xl mx-auto safe-x safe-top pb-20">
     <div class="flex items-start justify-between gap-3">
       <div>
         <p class="text-teal-100 text-sm" id="todayDate"></p>
@@ -51,10 +68,10 @@
   </div>
 </header>
 
-<main class="max-w-3xl mx-auto px-4 -mt-14 pb-16 space-y-5">
+<main class="layout max-w-3xl lg:max-w-6xl mx-auto safe-x safe-bottom -mt-14 flex flex-col gap-5">
 
   <!-- ယနေ့ တိုးတက်မှု + နောက်တစ်ခု -->
-  <section class="bg-white rounded-2xl shadow-lg shadow-teal-900/10 p-5">
+  <section class="area-progress bg-white rounded-2xl shadow-lg shadow-teal-900/10 p-5">
     <div class="flex items-center justify-between gap-4">
       <div class="min-w-0">
         <p class="text-sm text-slate-500">ယနေ့ ဆေးသောက်ပြီးမှု</p>
@@ -72,13 +89,13 @@
   </section>
 
   <!-- အချိန် သတ်မှတ်ရန် -->
-  <section class="bg-white rounded-2xl shadow-sm p-5">
+  <section class="area-settings bg-white rounded-2xl shadow-sm p-5">
     <div class="flex items-center justify-between gap-3 flex-wrap">
       <h2 class="text-lg font-bold text-slate-800">⏰ ကျွန်ုပ်၏ နေ့စဉ်အချိန်များ</h2>
       <button data-action="reset-times" class="text-sm text-teal-700 hover:text-teal-900 underline underline-offset-4">မူလအချိန်သို့ ပြန်ထားမည်</button>
     </div>
     <p class="text-sm text-slate-500 mt-1">အချိန်ကို စာရင်းထဲမှ ရွေးလိုက်ရုံဖြင့် ဆေးသောက်ချိန်ဇယား အလိုအလျောက် ပြန်တွက်ပေးပါမည်။</p>
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
+    <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-2 gap-3 mt-4">
       <label class="block">
         <span class="text-sm font-medium text-slate-600">☀️ အိပ်ရာထချိန်</span>
         <select id="t-wake" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></select>
@@ -95,7 +112,7 @@
         <span class="text-sm font-medium text-slate-600">🍲 ညစာ</span>
         <select id="t-dinner" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></select>
       </label>
-      <label class="block col-span-2 sm:col-span-1">
+      <label class="block col-span-2 sm:col-span-1 lg:col-span-2">
         <span class="text-sm font-medium text-slate-600">🌙 အိပ်ရာဝင်ချိန်</span>
         <select id="t-bed" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></select>
       </label>
@@ -112,13 +129,13 @@
   </section>
 
   <!-- ယနေ့ အချိန်ဇယား -->
-  <section>
+  <section class="area-timeline">
     <h2 class="text-lg font-bold text-slate-800 px-1 mb-3">📋 ယနေ့ အချိန်ဇယား</h2>
     <ol id="timeline" class="space-y-3"></ol>
   </section>
 
   <!-- လိုအပ်မှသောက်ရန် -->
-  <section class="bg-white rounded-2xl shadow-sm p-5 border-l-4 border-violet-400">
+  <section class="area-prn bg-white rounded-2xl shadow-sm p-5 border-l-4 border-violet-400">
     <div class="flex items-start justify-between gap-3 flex-wrap">
       <div class="min-w-0">
         <span class="inline-block text-xs font-semibold bg-violet-100 text-violet-700 rounded-full px-2.5 py-0.5">လိုအပ်မှသာ သောက်ရန် (PRN)</span>
@@ -131,7 +148,7 @@
   </section>
 
   <!-- ဆေးဘက်ဆိုင်ရာ သတိပေးချက်များ -->
-  <section class="bg-rose-50 border border-rose-200 rounded-2xl p-5">
+  <section class="area-warnings bg-rose-50 border border-rose-200 rounded-2xl p-5">
     <h2 class="text-lg font-bold text-rose-800">⚠️ အရေးကြီး သတိပေးချက်များ</h2>
     <ul class="mt-3 space-y-2.5 text-sm text-rose-900">
       <li class="flex gap-2"><span>🌙</span><span><b>Clonazepam (Prenarpil 0.5 mg)</b> ကို တစ်နေ့ တစ်ကြိမ်တည်း၊ <b>အိပ်ရာဝင်ချိန်တွင်သာ</b> သောက်ပါ။ နေ့ခင်းဘက် လုံးဝ မသောက်ပါနှင့်။</span></li>
@@ -144,22 +161,22 @@
   </section>
 
   <!-- ၇ ရက် မှတ်တမ်း -->
-  <section class="bg-white rounded-2xl shadow-sm p-5">
+  <section class="area-history bg-white rounded-2xl shadow-sm p-5">
     <h2 class="text-lg font-bold text-slate-800">📊 လွန်ခဲ့သော ၇ ရက် မှတ်တမ်း</h2>
     <div id="history" class="mt-4 grid grid-cols-7 gap-2 items-end"></div>
   </section>
 
-  <footer class="text-center text-xs text-slate-500 px-4 leading-relaxed">
+  <footer class="area-footer text-center text-xs text-slate-500 px-4 leading-relaxed">
     ဤအက်ပ်သည် သတိပေးရန်အတွက်သာ ဖြစ်ပြီး ဆရာဝန်၏ ညွှန်ကြားချက်ကို အစားမထိုးနိုင်ပါ။ သံသယရှိပါက သင့်ဆရာဝန် သို့မဟုတ် ဆေးဝါးကျွမ်းကျင်သူနှင့် တိုင်ပင်ပါ။<br>
     မှတ်တမ်းများကို ဤစက်ထဲတွင်သာ သိမ်းဆည်းထားပါသည်။
   </footer>
 </main>
 
 <!-- အသိပေး toast များ -->
-<div id="toasts" class="fixed top-3 inset-x-0 z-40 px-3 flex flex-col items-center gap-2 pointer-events-none" aria-live="polite"></div>
+<div id="toasts" class="safe-toast fixed top-3 inset-x-0 z-40 px-3 flex flex-col items-center gap-2 pointer-events-none" aria-live="polite"></div>
 
 <!-- popup -->
-<div id="modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" role="dialog" aria-modal="true">
+<div id="modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 safe-modal" role="dialog" aria-modal="true">
   <div id="modalCard" class="pop bg-white w-full max-w-md rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"></div>
 </div>
 
