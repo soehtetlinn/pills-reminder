@@ -7,12 +7,13 @@
   const MISSED_AFTER = 60;   // မိနစ် — ဤမျှကျော်လျှင် "လွတ်သွားပြီ" ဟု သတ်မှတ်
   const MYONAL_GAP = 240;    // မိနစ် — Myonal တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားရန်
   const CLONA_GAP = 120;     // မိနစ် — ညစာနှင့် Clonazepam အနည်းဆုံး ၂ နာရီ ခြားရန်
+  const PRE_GAP = 30;        // မိနစ် — အစာမစားမီဆေးနှင့် အစာကြား ခြားရမည့်အချိန်
   const NOTIFY_WINDOW = 30;  // မိနစ် — အချိန်ကျပြီး ဤအတွင်းသာ အသိပေး
 
   const C_STOMACH = 'အစာအိမ်အက်ဆစ်ပြန်တက်ခြင်း၊ ရင်ပူခြင်း၊ လည်ပင်းတစ်စို့ဖြစ်ခြင်းနှင့် လေတက်ခြင်းများ ဆိုးရွားစွာ ပြန်ဖြစ်လာနိုင်ပါသည်။';
   const MEDS = {
-    miracid: { name: 'Miracid', sub: 'Omeprazole', icon: '💊', rule: 'ဗိုက်ထဲ အစာမရှိချိန် — မနက်စာ မစားမီ သောက်ရန်', consequence: C_STOMACH },
-    domp:    { name: 'Domp-M', sub: 'အော့အန်/လေတက် သက်သာဆေး', icon: '💊', rule: 'ဗိုက်ထဲ အစာမရှိချိန် — မနက်စာ မစားမီ သောက်ရန်', consequence: C_STOMACH },
+    miracid: { name: 'Miracid', sub: 'Omeprazole', icon: '💊', rule: 'မနက်စာ မစားမီ မိနစ် ၃၀ အလိုတွင် သောက်ရန် (တစ်နေ့ ၁ ကြိမ်)', consequence: C_STOMACH },
+    domp:    { name: 'Domp-M', sub: 'အော့အန်/လေတက် သက်သာဆေး', icon: '💊', rule: 'အစာမစားမီ မိနစ် ၃၀ အလိုတွင် သောက်ရန် (တစ်နေ့ ၃ ကြိမ် — မနက်၊ နေ့လယ်၊ ည)', consequence: C_STOMACH },
     myonal:  { name: 'Myonal', sub: 'Eperisone 50 mg · ကြွက်သားလျော့ဆေး', icon: '💪', rule: 'အစာစားပြီးမှ သောက်ရန် (တစ်နေ့ ၃ ကြိမ်၊ တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားရန်)', consequence: 'ကျောအောင့်ခြင်း၊ ကြွက်သားတင်းခြင်းနှင့် ခန္ဓာကိုယ် တောင့်တင်းကိုက်ခဲမှုများ ပြန်ဖြစ်လာနိုင်ပါသည်။' },
     metformin: { name: 'Metformin', sub: 'ဆီးချိုဆေး', icon: '💊', rule: 'ပိုက်ဖြင့် အစာသွင်းပြီးမှ သောက်ရန် (တစ်နေ့ ၃ ကြိမ် — မနက်၊ နေ့လယ်၊ ည)', consequence: 'သွေးတွင်းသကြားဓာတ် မြင့်တက်လာနိုင်ပြီး ရေငတ်ခြင်း၊ ဆီးခဏခဏသွားခြင်း၊ မောပန်းနွမ်းနယ်ခြင်းတို့ ဖြစ်စေနိုင်ပါသည်။' },
     clona:   { name: 'Clonazepam', sub: 'Prenarpil 0.5 mg', icon: '🌙', rule: 'တစ်နေ့ တစ်ကြိမ်၊ ၁ လုံးတည်း — အိပ်ခါနီးမှသာ သီးသန့်သောက်ရန် (ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်)', consequence: 'ညဘက် အိပ်မပျော်ခြင်း၊ စိုးရိမ်ပူပန်မှုများ မြင့်တက်ခြင်းနှင့် အိပ်ရေးပျက်ခြင်းတို့ ဖြစ်စေနိုင်ပါသည်။' }
@@ -28,8 +29,15 @@
       fieldLabels: { wake: '☀️ အိပ်ရာထချိန်', breakfast: '🍳 မနက်စာ', lunch: '🍚 နေ့လယ်စာ', dinner: '🍲 ညစာ', bed: '🌙 အိပ်ရာဝင်ချိန်' },
       meals: { breakfast: { name: 'မနက်စာ', icon: '🍳' }, lunch: { name: 'နေ့လယ်စာ', icon: '🍚' }, dinner: { name: 'ညစာ', icon: '🍲' } },
       when: { breakfast: 'မနက်စာ စားပြီး', lunch: 'နေ့လယ်စာ စားပြီး', dinner: 'ညစာ စားပြီး' },
-      wakeDoses: ['miracid', 'domp'], afterMeal: 'myonal', dosePrefix: 'myonal', bedDose: true, prn: true,
-      doseIds: ['miracid', 'domp', 'myonal1', 'myonal2', 'myonal3', 'clona'],
+      // အစာမစားမီ မိနစ် ၃၀ အလိုတွင် သောက်ရမည့်ဆေးများ (Miracid မနက်တစ်ကြိမ်၊ Domp-M အစာတိုင်းမတိုင်မီ)
+      before: {
+        breakfast: [{ id: 'miracid', med: 'miracid' }, { id: 'domp', med: 'domp' }],
+        lunch: [{ id: 'domp2', med: 'domp' }],
+        dinner: [{ id: 'domp3', med: 'domp' }]
+      },
+      whenBefore: { breakfast: 'မနက်စာ မစားမီ', lunch: 'နေ့လယ်စာ မစားမီ', dinner: 'ညစာ မစားမီ' },
+      afterMeal: 'myonal', dosePrefix: 'myonal', bedDose: true, prn: true,
+      doseIds: ['miracid', 'domp', 'myonal1', 'domp2', 'myonal2', 'domp3', 'myonal3', 'clona'],
       w: {
         fed: 'စားပြီး', feedDone: 'စားပြီးပြီ', feedTime: 'အစာစားချိန်', feedDue: 'အစာစားချိန် ရောက်ပါပြီ', feedArrive: 'စားချိန် ရောက်ပါပြီ',
         afterFeed: 'အစာစားပြီးမှ', notFed: 'မစားရသေးပါ — စားပြီးမှ သောက်မည်',
@@ -42,7 +50,7 @@
         ['🚗', 'Clonazepam သို့မဟုတ် Myonal သောက်ပြီးနောက် ငိုက်မျဉ်းနိုင်သဖြင့် ယာဉ်မမောင်းပါနှင့်၊ စက်ကိရိယာများ မကိုင်တွယ်ပါနှင့်။'],
         ['✖️', 'လွတ်သွားသော ဆေးအတွက် <b>နှစ်ဆတိုး၍ မသောက်ပါနှင့်။</b>'],
         ['🩺', 'ဆရာဝန် မညွှန်ကြားဘဲ ဆေးပမာဏ မတိုးပါနှင့်၊ မလျှော့ပါနှင့်၊ Clonazepam ကို ရုတ်တရက် မဖြတ်ပါနှင့်။'],
-        ['🍽️', '<b>Miracid</b> နှင့် <b>Domp-M</b> ကို ဗိုက်ထဲ အစာမရှိချိန် (မနက်စာ မစားမီ) သောက်ပါ။ <b>Myonal</b> ကို အစာစားပြီးမှ သောက်ပါ။']
+        ['🍽️', '<b>Miracid</b> (မနက်စာ မစားမီ တစ်ကြိမ်) နှင့် <b>Domp-M</b> (မနက်၊ နေ့လယ်၊ ည အစာတိုင်း မစားမီ) ကို အစာမစားမီ <b>မိနစ် ၃၀ အလို</b>တွင် သောက်ပါ။ <b>Myonal</b> ကို အစာစားပြီးမှ သောက်ပါ။']
       ]
     },
     tube: {
@@ -52,7 +60,7 @@
       fieldLabels: { wake: '☀️ အိပ်ရာထချိန်', breakfast: '🥣 မနက် အစာသွင်းချိန်', lunch: '🥣 နေ့လယ် အစာသွင်းချိန်', dinner: '🥣 ည အစာသွင်းချိန်', bed: '🌙 အိပ်ရာဝင်ချိန်' },
       meals: { breakfast: { name: 'မနက်ပိုင်း အစာ', icon: '🥣' }, lunch: { name: 'နေ့လယ်ပိုင်း အစာ', icon: '🥣' }, dinner: { name: 'ညပိုင်း အစာ', icon: '🥣' } },
       when: { breakfast: 'မနက်ပိုင်း အစာသွင်းပြီး', lunch: 'နေ့လယ်ပိုင်း အစာသွင်းပြီး', dinner: 'ညပိုင်း အစာသွင်းပြီး' },
-      wakeDoses: [], afterMeal: 'metformin', dosePrefix: 'met', bedDose: false, prn: false,
+      before: {}, whenBefore: {}, afterMeal: 'metformin', dosePrefix: 'met', bedDose: false, prn: false,
       doseIds: ['met1', 'met2', 'met3'],
       w: {
         fed: 'သွင်းပြီး', feedDone: 'အစာသွင်းပြီးပြီ', feedTime: 'ပိုက်ဖြင့် အစာသွင်းချိန်', feedDue: 'အစာသွင်းချိန် ရောက်ပါပြီ', feedArrive: 'သွင်းချိန် ရောက်ပါပြီ',
@@ -141,17 +149,28 @@
 
     add({ id: 'wake', type: 'info', time: wake, title: 'အိပ်ရာထချိန်', icon: '☀️' });
     const plan = P();
-    plan.wakeDoses.forEach(k => add({ id: k, type: 'dose', med: k, time: wake, when: 'အိပ်ရာထထချင်း' }));
 
-    // အစာတစ်နပ်နှင့်တစ်နပ်၊ အစာပြီးသောက်ဆေး တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားအောင် အစဉ်လိုက် တွက်သည်။
+    // အစဉ်လိုက် တွက်သည် —
+    //   အစာမစားမီဆေး → (မိနစ် ၃၀) → အစာ → အစာပြီးသောက်ဆေး
+    // အစာတစ်နပ်နှင့်တစ်နပ်၊ အစာပြီးသောက်ဆေး တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားသည်။
     // အစာ သို့မဟုတ် ဆေးကို နောက်ကျမှ စား/သောက်ခဲ့လျှင် နောက်အကြိမ်များကို အလိုအလျောက် နောက်ရွှေ့ပေးသည်။
     const WHEN = plan.when;
     let prevMeal = null, prevDose = null, lastMeal = 0;
     ['breakfast', 'lunch', 'dinner'].forEach((mealId, i) => {
       const set = n(toMin(s[mealId]));
-      const planned = prevMeal == null ? set : Math.max(set, prevMeal + MYONAL_GAP);
+      const pres = plan.before[mealId] || [];
+      let planned = set, kind = null;
+      if (prevMeal != null && prevMeal + MYONAL_GAP > planned) { planned = prevMeal + MYONAL_GAP; kind = 'gap'; }
+      // အစာမစားမီဆေးကို အစာမတိုင်မီ မိနစ် ၃၀ တွင် ထားသည်။ အိပ်ရာထချိန်ထက် စောနေလျှင် အိပ်ရာထချိန်တွင် ထားပြီး အစာကို နောက်ရွှေ့သည်။
+      let preTime = planned - PRE_GAP;
+      if (pres.length && preTime < wake) { preTime = wake; planned = wake + PRE_GAP; kind = 'pre'; }
+      // ဆေးကို တကယ်သောက်ခဲ့သောအချိန်မှ မိနစ် ၃၀ မပြည့်မချင်း အစာစားချိန် မကျသေး
+      const takenPre = pres.map(p => day.doses[p.id]).filter(r => r && r.status === 'taken').map(r => r.min);
+      if (takenPre.length && Math.max(...takenPre) + PRE_GAP > planned) { planned = Math.max(...takenPre) + PRE_GAP; kind = 'pre'; }
+      pres.forEach(p => add({ id: p.id, type: 'dose', med: p.med, time: preTime, when: plan.whenBefore[mealId], before: mealId }));
+
       const mealTime = eaten(mealId) != null ? eaten(mealId) : planned;
-      add({ id: mealId, type: 'meal', time: mealTime, shifted: eaten(mealId) == null && planned > set });
+      add({ id: mealId, type: 'meal', time: mealTime, shifted: eaten(mealId) == null ? kind : null, pres: pres.map(p => p.id) });
 
       const doseId = plan.dosePrefix + (i + 1), rec = day.doses[doseId];
       const base = eaten(mealId) != null ? mealTime : mealTime + 30;
@@ -181,6 +200,12 @@
     return now >= it.time ? 'due' : 'upcoming';
   }
   const titleOf = it => it.type === 'dose' ? MEDS[it.med].name : it.type === 'meal' ? P().meals[it.id].name : it.title;
+
+  // အချိန်ကို ဘာကြောင့် နောက်ရွှေ့ထားသည်ကို ရှင်းပြသော စာ
+  function shiftNote(it) {
+    if (it.type === 'meal') return it.shifted === 'pre' ? 'အစာမစားမီဆေး သောက်ပြီး မိနစ် ၃၀ ခြားရန်' : 'ယခင်အစာနှင့် ၄ နာရီ ခြားရန်';
+    return it.shifted === 'gap' ? `ယခင် ${MEDS[it.med].name} နှင့် အနည်းဆုံး ၄ နာရီ ခြားရန်` : 'ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်';
+  }
 
   /* ---------- ပြသခြင်း ---------- */
   const BTN = 'rounded-xl font-medium px-4 py-2.5 text-sm transition-colors';
@@ -226,7 +251,7 @@
       : st === 'due' ? ['ယခု အချိန်ကျပါပြီ', 'text-amber-600', 'bg-amber-50']
       : [`အချိန်မကျသေးပါ — ${fmtDur(it.time - now)} အကြာတွင်`, 'text-slate-500', 'bg-slate-100'];
     const shifted = it.shifted
-      ? `<p class="text-xs text-sky-700 mt-1">⏱ ${isMeal ? 'ယခင်အစာနှင့် ၄ နာရီ ခြားရန်' : it.shifted === 'gap' ? `ယခင် ${MEDS[it.med].name} နှင့် အနည်းဆုံး ၄ နာရီ ခြားရန်` : 'ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်'} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : '';
+      ? `<p class="text-xs text-sky-700 mt-1">⏱ ${shiftNote(it)} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : '';
     const big = 'w-full rounded-2xl font-semibold text-lg py-4 transition-colors';
     const buttons = isMeal
       ? `<button data-action="meal-done" data-id="${it.id}" class="${big} bg-sky-600 hover:bg-sky-700 text-white">✓ ${P().w.feedDone}</button>`
@@ -240,6 +265,7 @@
       <p class="mt-3 text-lg font-semibold text-slate-800">${fmtTime(it.time)}</p>
       <p class="text-sm text-slate-600">${isMeal ? P().w.mealHint : `${it.when} · ${info.rule}`}</p>
       ${shifted}
+      ${it.before ? `<p class="mt-2 inline-block rounded-full bg-teal-50 text-teal-800 text-sm font-medium px-3 py-1">⏳ သောက်ပြီး မိနစ် ၃၀ အကြာမှ ${P().meals[it.before].name} စားပါ</p>` : ''}
       ${st === 'missed' && !isMeal ? `<div class="mt-3 rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-900 text-left"><b>⚠️ မသောက်ရင် ဖြစ်မည့်ဆိုးကျိုး —</b> ${info.consequence}</div>` : ''}
       <div class="mt-5 space-y-1">${buttons}</div>
     </div>`;
@@ -262,7 +288,7 @@
             <div class="min-w-0">
               <p class="font-semibold text-slate-800">${m.icon} ${m.name}</p>
               <p class="text-sm ${done ? 'text-emerald-700' : st === 'due' ? 'text-amber-700' : 'text-slate-500'}">${done ? `✓ ${fmtTime(day.meals[it.id])} တွင် ${P().w.fed}` : st === 'due' ? P().w.feedDue : P().w.feedTime}</p>
-              ${it.shifted ? '<p class="text-xs text-sky-700">⏱ ယခင်အစာနှင့် ၄ နာရီ ခြားရန် အချိန်ကို နောက်ရွှေ့ထားသည်</p>' : ''}
+              ${it.shifted ? `<p class="text-xs text-sky-700">⏱ ${shiftNote(it)} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : ''}
             </div>
             ${done
               ? `<button data-action="meal-undo" data-id="${it.id}" class="text-sm text-slate-500 underline underline-offset-4">ပြန်ပြင်မည်</button>`
@@ -300,7 +326,7 @@
           ${badge}
         </div>
         <p class="text-sm text-slate-600">${it.when} · ${med.rule}</p>
-        ${!rec && it.shifted ? `<p class="text-xs text-sky-700 mt-1">⏱ ${it.shifted === 'gap' ? `ယခင် ${MEDS[it.med].name} နှင့် အနည်းဆုံး ၄ နာရီ ခြားရန်` : 'ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်'} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : ''}
+        ${!rec && it.shifted ? `<p class="text-xs text-sky-700 mt-1">⏱ ${shiftNote(it)} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : ''}
         ${warn}
         <div class="mt-2.5 flex items-center gap-2 flex-wrap">${actions}</div>
       </div></li>`;
@@ -310,7 +336,7 @@
     const s = state.settings, plan = P(), wake = toMin(s.wake), n = m => (m < wake ? m + 1440 : m);
     const b = n(toMin(s.breakfast)), l = n(toMin(s.lunch)), d = n(toMin(s.dinner)), bed = n(toMin(s.bed));
     const med = MEDS[plan.afterMeal].name, out = [];
-    if (plan.wakeDoses.length && b - wake < 30) out.push('Miracid နှင့် Domp-M သည် အစာမစားမီ သောက်ရသောဆေးဖြစ်၍ အိပ်ရာထချိန်နှင့် မနက်စာကြား အနည်းဆုံး မိနစ် ၃၀ ခြားထားရန် အကြံပြုပါသည်။');
+    if (plan.before.breakfast && b - wake < PRE_GAP) out.push('အိပ်ရာထချိန်နှင့် မနက်စာကြား မိနစ် ၃၀ မခြားပါ — အစာမစားမီဆေး သောက်ပြီး မိနစ် ၃၀ ခြားစေရန် ဇယားထဲတွင် မနက်စာချိန်ကို နောက်ရွှေ့ပေးထားပါသည်။');
     if (!(b < l && l < d)) out.push('အချိန်များ အစဉ်လိုက် မဖြစ်နေပါ — မနက်၊ နေ့လယ်၊ ည အစီအစဉ်အတိုင်း ပြန်စစ်ပါ။');
     else if (l - b < MYONAL_GAP || d - l < MYONAL_GAP) out.push(`အစာအချိန်များကြား ၄ နာရီ မခြားပါ — ${med} တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားစေရန် ဇယားထဲတွင် အချိန်ကို အလိုအလျောက် နောက်ရွှေ့ပေးထားပါသည်။`);
     if (plan.bedDose) {
@@ -402,6 +428,19 @@
     const it = items.find(x => x.id === id);
 
     if (action === 'dose-take') {
+      // အစာမစားမီဆေးကို အစာစားပြီးမှ မှတ်ရန် ကြိုးစားလျှင် မေးမည်
+      if (it.before && day.meals[it.before] != null) {
+        const mealName = P().meals[it.before].name, name = MEDS[it.med].name;
+        openModal({
+          tone: 'amber', icon: '🍽️', title: `${mealName} စားပြီးသွားပါပြီ`,
+          body: `<p>${name} သည် <b>အစာမစားမီ မိနစ် ၃၀ အလို</b>တွင် သောက်ရသောဆေး ဖြစ်ပါသည်။ ${mealName} မစားမီက သောက်ခဲ့ပါသလား?</p><p class="text-sm text-slate-600">မသောက်ခဲ့ပါက ဆရာဝန်၏ ညွှန်ကြားချက်အတိုင်း လုပ်ဆောင်ပါ။ နောက်အကြိမ်တွင် နှစ်ဆတိုး၍ မသောက်ပါနှင့်။</p>`,
+          actions: [
+            { label: 'သောက်ခဲ့ပါသည် — မှတ်တမ်းတင်မည်', primary: true, fn: () => takeDose(id) },
+            { label: 'မသောက်ခဲ့ပါ' }
+          ]
+        });
+        return;
+      }
       // Clonazepam ကို အိပ်ရာဝင်ချိန်မတိုင်မီ စော၍ သောက်ရန် ကြိုးစားလျှင် သတိပေးမည်
       if (it.med === 'clona' && info.min < it.time - 60) {
         openModal({
@@ -462,7 +501,39 @@
     }
 
     else if (action === 'dose-undo') { delete day.doses[id]; day.warned[id] = true; }
-    else if (action === 'meal-done') { day.meals[id] = info.min; toast(`✓ ${P().meals[id].name} ${P().w.fed}ကြောင်း မှတ်ပြီးပါပြီ`, 'teal'); }
+    else if (action === 'meal-done') {
+      const mealName = P().meals[id].name, pres = it.pres || [];
+      const eat = () => { getDay(info.key).meals[id] = nowInfo().min; save(); toast(`✓ ${mealName} ${P().w.fed}ကြောင်း မှတ်ပြီးပါပြီ`, 'teal'); };
+      // အစာမစားမီဆေး မသောက်ရသေးဘဲ စားရန် ကြိုးစားလျှင်
+      const waiting = pres.filter(k => !day.doses[k]);
+      if (waiting.length) {
+        const names = [...new Set(buildSchedule(day).filter(x => waiting.includes(x.id)).map(x => MEDS[x.med].name))].join(' နှင့် ');
+        openModal({
+          tone: 'amber', icon: '💊', title: 'အစာမစားမီဆေး မသောက်ရသေးပါ',
+          body: `<p><b>${names}</b> ကို ${mealName} မစားမီ <b>မိနစ် ၃၀ အလို</b>တွင် သောက်ရပါမည်။</p><p>ဆေးကို အရင်သောက်ပြီး မိနစ် ၃၀ စောင့်မှ စားပါ။</p>`,
+          actions: [
+            { label: 'ဆေးအရင် သောက်မည်', primary: true },
+            { label: 'စားပြီးသွားပြီ — မှတ်တမ်းတင်မည်', danger: true, fn: eat }
+          ]
+        });
+        return;
+      }
+      // ဆေးသောက်ပြီး မိနစ် ၃၀ မပြည့်သေးဘဲ စားရန် ကြိုးစားလျှင်
+      const takenAt = pres.map(k => day.doses[k]).filter(r => r && r.status === 'taken').map(r => r.min);
+      const last = takenAt.length ? Math.max(...takenAt) : null;
+      if (last != null && info.min - last < PRE_GAP) {
+        openModal({
+          tone: 'amber', icon: '⏳', title: 'မိနစ် ၃၀ မပြည့်သေးပါ',
+          body: `<p>အစာမစားမီဆေးကို <b>${fmtTime(last)}</b> တွင် သောက်ထားပြီး <b>${fmtDur(info.min - last)}</b> သာ ရှိပါသေးသည်။</p><p>${mealName} ကို <b>${fmtTime(last + PRE_GAP)}</b> နောက်ပိုင်းမှ စားပါ။</p>`,
+          actions: [
+            { label: `${fmtTime(last + PRE_GAP)} ကျမှ စားမည်`, primary: true },
+            { label: 'စားပြီးသွားပြီ — မှတ်တမ်းတင်မည်', danger: true, fn: eat }
+          ]
+        });
+        return;
+      }
+      eat();
+    }
     else if (action === 'meal-undo') { delete day.meals[id]; }
     else if (action === 'prn-add') { day.prn.push(info.min); toast('✓ Gaviscon သောက်ကြောင်း မှတ်ပြီးပါပြီ', 'teal'); }
     else if (action === 'prn-remove') { day.prn.splice(+id, 1); }
