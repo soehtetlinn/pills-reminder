@@ -48,6 +48,10 @@
     <p id="gateStatus" class="mt-2 text-slate-600">စစ်ဆေးနေပါသည်…</p>
     <button id="gateBtn" data-action="sign-in" class="hidden mt-5 w-full rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-lg py-3.5">Google ဖြင့် ဝင်မည်</button>
     <button id="gateRetry" data-action="reload" class="hidden mt-5 w-full rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3">ပြန်ကြိုးစားမည်</button>
+    <div id="gateProfile" class="hidden mt-5 space-y-2">
+      <button data-action="pick-profile" data-id="tube" class="w-full rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3.5 px-4">ဟုတ်ပါသည်<span class="block text-sm font-normal text-teal-50">ပိုက်ဖြင့် အစာသွင်းပြီး Metformin သောက်ရသည်</span></button>
+      <button data-action="pick-profile" data-id="standard" class="w-full rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-3.5 px-4">မဟုတ်ပါ<span class="block text-sm font-normal text-slate-500">ပုံမှန် ဆေးသောက်အစီအစဉ်</span></button>
+    </div>
     <p id="gateErr" class="mt-3 text-sm text-rose-700 break-words"></p>
     <p class="mt-5 text-xs text-slate-400">🔒 သင့်မှတ်တမ်းများကို သင့် account ဖြင့်သာ ကြည့်နိုင်ပါသည်။</p>
   </div>
@@ -107,7 +111,7 @@
   </section>
 
   <!-- လိုအပ်မှသောက်ရန် -->
-  <section data-view="home" class=" bg-white rounded-2xl shadow-sm p-5 border-l-4 border-violet-400">
+  <section id="prnBox" data-view="home" class=" bg-white rounded-2xl shadow-sm p-5 border-l-4 border-violet-400">
     <div class="flex items-start justify-between gap-3 flex-wrap">
       <div class="min-w-0">
         <span class="inline-block text-xs font-semibold bg-violet-100 text-violet-700 rounded-full px-2.5 py-0.5">လိုအပ်မှသာ သောက်ရန် (PRN)</span>
@@ -161,6 +165,14 @@
     </div>
     <div id="advisories" class="mt-3 space-y-2"></div>
 
+    <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+      <div class="min-w-0">
+        <p class="font-medium text-slate-700">🗂️ ဆေးသောက် အစီအစဉ်</p>
+        <p class="text-sm text-slate-500" id="profileName"></p>
+      </div>
+      <button data-action="change-profile" class="rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2.5 text-sm">ပြောင်းမည်</button>
+    </div>
+
     <div id="installRow" class="hidden mt-4 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
       <div class="min-w-0">
         <p class="font-medium text-slate-700">📲 အက်ပ်အဖြစ် ထည့်သွင်းရန်</p>
@@ -193,14 +205,7 @@
       <h2 class="text-lg font-bold text-rose-800">⚠️ အရေးကြီး သတိပေးချက်များ</h2>
     </div>
     <div class="px-5 pb-5">
-    <ul class="mt-3 space-y-2.5 text-sm text-rose-900">
-      <li class="flex gap-2"><span>🌙</span><span><b>Clonazepam (Prenarpil 0.5 mg)</b> ကို တစ်နေ့ တစ်ကြိမ်တည်း၊ <b>အိပ်ရာဝင်ချိန်တွင်သာ</b> သောက်ပါ။ နေ့ခင်းဘက် လုံးဝ မသောက်ပါနှင့်။</span></li>
-      <li class="flex gap-2"><span>🚫</span><span><b>အရက် လုံးဝ မသောက်ပါနှင့်။</b> Clonazepam၊ Myonal တို့နှင့် အရက်တွဲမိပါက အလွန်အမင်း ငိုက်မျဉ်းခြင်း၊ မူးဝေခြင်းနှင့် အသက်ရှူနှေးခြင်းတို့ ဖြစ်နိုင်ပါသည်။</span></li>
-      <li class="flex gap-2"><span>🚗</span><span>Clonazepam သို့မဟုတ် Myonal သောက်ပြီးနောက် ငိုက်မျဉ်းနိုင်သဖြင့် ယာဉ်မမောင်းပါနှင့်၊ စက်ကိရိယာများ မကိုင်တွယ်ပါနှင့်။</span></li>
-      <li class="flex gap-2"><span>✖️</span><span>လွတ်သွားသော ဆေးအတွက် <b>နှစ်ဆတိုး၍ မသောက်ပါနှင့်။</b></span></li>
-      <li class="flex gap-2"><span>🩺</span><span>ဆရာဝန် မညွှန်ကြားဘဲ ဆေးပမာဏ မတိုးပါနှင့်၊ မလျှော့ပါနှင့်၊ Clonazepam ကို ရုတ်တရက် မဖြတ်ပါနှင့်။</span></li>
-      <li class="flex gap-2"><span>🍽️</span><span><b>Miracid</b> နှင့် <b>Domp-M</b> ကို ဗိုက်ထဲ အစာမရှိချိန် (မနက်စာ မစားမီ) သောက်ပါ။ <b>Myonal</b> ကို အစာစားပြီးမှ သောက်ပါ။</span></li>
-    </ul>
+    <ul id="warnList" class="space-y-2.5 text-sm text-rose-900"></ul>
     </div>
   </section>
 
@@ -214,7 +219,7 @@
 
   <footer class="text-center text-xs text-slate-500 px-4 leading-relaxed">
     ဤအက်ပ်သည် သတိပေးရန်အတွက်သာ ဖြစ်ပြီး ဆရာဝန်၏ ညွှန်ကြားချက်ကို အစားမထိုးနိုင်ပါ။ သံသယရှိပါက သင့်ဆရာဝန် သို့မဟုတ် ဆေးဝါးကျွမ်းကျင်သူနှင့် တိုင်ပင်ပါ။<br>
-    မှတ်တမ်းများကို ဤစက်ထဲတွင်သာ သိမ်းဆည်းထားပါသည်။
+    မှတ်တမ်းများကို သင့် Google account အောက်တွင်သာ သိမ်းဆည်းထားပါသည်။
   </footer>
 </main>
 </div>

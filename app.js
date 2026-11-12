@@ -14,14 +14,63 @@
     miracid: { name: 'Miracid', sub: 'Omeprazole', icon: '💊', rule: 'ဗိုက်ထဲ အစာမရှိချိန် — မနက်စာ မစားမီ သောက်ရန်', consequence: C_STOMACH },
     domp:    { name: 'Domp-M', sub: 'အော့အန်/လေတက် သက်သာဆေး', icon: '💊', rule: 'ဗိုက်ထဲ အစာမရှိချိန် — မနက်စာ မစားမီ သောက်ရန်', consequence: C_STOMACH },
     myonal:  { name: 'Myonal', sub: 'Eperisone 50 mg · ကြွက်သားလျော့ဆေး', icon: '💪', rule: 'အစာစားပြီးမှ သောက်ရန် (တစ်နေ့ ၃ ကြိမ်၊ တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားရန်)', consequence: 'ကျောအောင့်ခြင်း၊ ကြွက်သားတင်းခြင်းနှင့် ခန္ဓာကိုယ် တောင့်တင်းကိုက်ခဲမှုများ ပြန်ဖြစ်လာနိုင်ပါသည်။' },
+    metformin: { name: 'Metformin', sub: 'ဆီးချိုဆေး', icon: '💊', rule: 'ပိုက်ဖြင့် အစာသွင်းပြီးမှ သောက်ရန် (တစ်နေ့ ၃ ကြိမ် — မနက်၊ နေ့လယ်၊ ည)', consequence: 'သွေးတွင်းသကြားဓာတ် မြင့်တက်လာနိုင်ပြီး ရေငတ်ခြင်း၊ ဆီးခဏခဏသွားခြင်း၊ မောပန်းနွမ်းနယ်ခြင်းတို့ ဖြစ်စေနိုင်ပါသည်။' },
     clona:   { name: 'Clonazepam', sub: 'Prenarpil 0.5 mg', icon: '🌙', rule: 'တစ်နေ့ တစ်ကြိမ်၊ ၁ လုံးတည်း — အိပ်ခါနီးမှသာ သီးသန့်သောက်ရန် (ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်)', consequence: 'ညဘက် အိပ်မပျော်ခြင်း၊ စိုးရိမ်ပူပန်မှုများ မြင့်တက်ခြင်းနှင့် အိပ်ရေးပျက်ခြင်းတို့ ဖြစ်စေနိုင်ပါသည်။' }
   };
-  const MEALS = {
-    breakfast: { name: 'မနက်စာ', icon: '🍳' },
-    lunch:     { name: 'နေ့လယ်စာ', icon: '🍚' },
-    dinner:    { name: 'ညစာ', icon: '🍲' }
+  /* ---------- ဆေးသောက် အစီအစဉ်များ ----------
+     Account တစ်ခုစီသည် အစီအစဉ်တစ်ခုကို သုံးသည် (ပထမဆုံး login ဝင်ချိန်တွင် မေးသည်)။
+     standard — အစာအိမ်ဆေး၊ Myonal၊ အိပ်ဆေး။  tube — ပိုက်ဖြင့် အစာသွင်းပြီး Metformin သောက်ရသူ။ */
+  const PROFILES = {
+    standard: {
+      label: 'ပုံမှန် အစီအစဉ် (Miracid၊ Domp-M၊ Myonal၊ Clonazepam)',
+      defaults: DEFAULTS,
+      fields: ['wake', 'breakfast', 'lunch', 'dinner', 'bed'],
+      fieldLabels: { wake: '☀️ အိပ်ရာထချိန်', breakfast: '🍳 မနက်စာ', lunch: '🍚 နေ့လယ်စာ', dinner: '🍲 ညစာ', bed: '🌙 အိပ်ရာဝင်ချိန်' },
+      meals: { breakfast: { name: 'မနက်စာ', icon: '🍳' }, lunch: { name: 'နေ့လယ်စာ', icon: '🍚' }, dinner: { name: 'ညစာ', icon: '🍲' } },
+      when: { breakfast: 'မနက်စာ စားပြီး', lunch: 'နေ့လယ်စာ စားပြီး', dinner: 'ညစာ စားပြီး' },
+      wakeDoses: ['miracid', 'domp'], afterMeal: 'myonal', dosePrefix: 'myonal', bedDose: true, prn: true,
+      doseIds: ['miracid', 'domp', 'myonal1', 'myonal2', 'myonal3', 'clona'],
+      w: {
+        fed: 'စားပြီး', feedDone: 'စားပြီးပြီ', feedTime: 'အစာစားချိန်', feedDue: 'အစာစားချိန် ရောက်ပါပြီ', feedArrive: 'စားချိန် ရောက်ပါပြီ',
+        afterFeed: 'အစာစားပြီးမှ', notFed: 'မစားရသေးပါ — စားပြီးမှ သောက်မည်',
+        mealHint: 'အစာစားချိန် — စားပြီးလျှင် နောက်အဆင့်တွင် Myonal သောက်ရန် ပြပါမည်',
+        mealNotify: 'အစာစားပြီးနောက် Myonal သောက်ရန် မမေ့ပါနှင့်။'
+      },
+      warnings: [
+        ['🌙', '<b>Clonazepam (Prenarpil 0.5 mg)</b> ကို တစ်နေ့ တစ်ကြိမ်တည်း၊ <b>အိပ်ရာဝင်ချိန်တွင်သာ</b> သောက်ပါ။ နေ့ခင်းဘက် လုံးဝ မသောက်ပါနှင့်။'],
+        ['🚫', '<b>အရက် လုံးဝ မသောက်ပါနှင့်။</b> Clonazepam၊ Myonal တို့နှင့် အရက်တွဲမိပါက အလွန်အမင်း ငိုက်မျဉ်းခြင်း၊ မူးဝေခြင်းနှင့် အသက်ရှူနှေးခြင်းတို့ ဖြစ်နိုင်ပါသည်။'],
+        ['🚗', 'Clonazepam သို့မဟုတ် Myonal သောက်ပြီးနောက် ငိုက်မျဉ်းနိုင်သဖြင့် ယာဉ်မမောင်းပါနှင့်၊ စက်ကိရိယာများ မကိုင်တွယ်ပါနှင့်။'],
+        ['✖️', 'လွတ်သွားသော ဆေးအတွက် <b>နှစ်ဆတိုး၍ မသောက်ပါနှင့်။</b>'],
+        ['🩺', 'ဆရာဝန် မညွှန်ကြားဘဲ ဆေးပမာဏ မတိုးပါနှင့်၊ မလျှော့ပါနှင့်၊ Clonazepam ကို ရုတ်တရက် မဖြတ်ပါနှင့်။'],
+        ['🍽️', '<b>Miracid</b> နှင့် <b>Domp-M</b> ကို ဗိုက်ထဲ အစာမရှိချိန် (မနက်စာ မစားမီ) သောက်ပါ။ <b>Myonal</b> ကို အစာစားပြီးမှ သောက်ပါ။']
+      ]
+    },
+    tube: {
+      label: 'ပိုက်ဖြင့် အစာသွင်းရသူ အစီအစဉ် (Metformin)',
+      defaults: { wake: '07:00', breakfast: '08:00', lunch: '13:00', dinner: '19:00', bed: '22:00' },
+      fields: ['wake', 'breakfast', 'lunch', 'dinner'],
+      fieldLabels: { wake: '☀️ အိပ်ရာထချိန်', breakfast: '🥣 မနက် အစာသွင်းချိန်', lunch: '🥣 နေ့လယ် အစာသွင်းချိန်', dinner: '🥣 ည အစာသွင်းချိန်', bed: '🌙 အိပ်ရာဝင်ချိန်' },
+      meals: { breakfast: { name: 'မနက်ပိုင်း အစာ', icon: '🥣' }, lunch: { name: 'နေ့လယ်ပိုင်း အစာ', icon: '🥣' }, dinner: { name: 'ညပိုင်း အစာ', icon: '🥣' } },
+      when: { breakfast: 'မနက်ပိုင်း အစာသွင်းပြီး', lunch: 'နေ့လယ်ပိုင်း အစာသွင်းပြီး', dinner: 'ညပိုင်း အစာသွင်းပြီး' },
+      wakeDoses: [], afterMeal: 'metformin', dosePrefix: 'met', bedDose: false, prn: false,
+      doseIds: ['met1', 'met2', 'met3'],
+      w: {
+        fed: 'သွင်းပြီး', feedDone: 'အစာသွင်းပြီးပြီ', feedTime: 'ပိုက်ဖြင့် အစာသွင်းချိန်', feedDue: 'အစာသွင်းချိန် ရောက်ပါပြီ', feedArrive: 'သွင်းချိန် ရောက်ပါပြီ',
+        afterFeed: 'အစာသွင်းပြီးမှ', notFed: 'မသွင်းရသေးပါ — သွင်းပြီးမှ သောက်မည်',
+        mealHint: 'ပိုက်ဖြင့် အစာသွင်းချိန် — သွင်းပြီးလျှင် နောက်အဆင့်တွင် Metformin သောက်ရန် ပြပါမည်',
+        mealNotify: 'အစာသွင်းပြီးနောက် Metformin သောက်ရန် မမေ့ပါနှင့်။'
+      },
+      warnings: [
+        ['🥣', '<b>Metformin</b> ကို ပိုက်ဖြင့် <b>အစာသွင်းပြီးမှသာ</b> သောက်ပါ။ ဗိုက်ထဲ အစာမရှိဘဲ မသောက်ပါနှင့်။'],
+        ['🤢', 'အစာမသွင်းနိုင်ခြင်း၊ အန်ခြင်း၊ ဝမ်းအလွန်လျှောခြင်း ရှိနေပါက ဆေးမသောက်မီ ဆရာဝန်နှင့် တိုင်ပင်ပါ။'],
+        ['✖️', 'လွတ်သွားသော ဆေးအတွက် <b>နှစ်ဆတိုး၍ မသောက်ပါနှင့်။</b>'],
+        ['💊', 'ဆေးကို ပိုက်ဖြင့် သွင်းရန်လိုပါက ကြိတ်ရ/မကြိတ်ရကို ဆရာဝန် သို့မဟုတ် ဆေးဝါးကျွမ်းကျင်သူထံ အရင်မေးပါ — အချို့ဆေးပြားများကို မကြိတ်ရပါ။'],
+        ['🚨', 'ချွေးစေးထွက်ခြင်း၊ တုန်ခြင်း၊ မူးဝေခြင်း၊ သတိလစ်ချင်ခြင်း သို့မဟုတ် အသက်ရှူမြန်ခြင်း၊ အလွန်မောပန်းခြင်း ဖြစ်ပါက ဆရာဝန်/ဆေးရုံသို့ ချက်ချင်း ဆက်သွယ်ပါ။'],
+        ['🩺', 'ဆရာဝန် မညွှန်ကြားဘဲ ဆေးပမာဏ မတိုးပါနှင့်၊ မလျှော့ပါနှင့်၊ မဖြတ်ပါနှင့်။']
+      ]
+    }
   };
-  const TOTAL_DOSES = 6;
+  const P = () => PROFILES[state.profile] || PROFILES.standard;
 
   /* ---------- အထောက်အကူ function များ ---------- */
   const $ = s => document.querySelector(s);
@@ -44,11 +93,11 @@
   const keyToDate = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
 
   /* ---------- သိမ်းဆည်းမှု ---------- */
-  let state = { v: 2, uid: null, settings: { ...DEFAULTS }, days: {} };
+  let state = { v: 2, uid: null, profile: null, settings: { ...DEFAULTS }, days: {} };
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY));
     if (saved && saved.settings) {
-      state = { v: 2, uid: saved.uid || null, settings: { ...DEFAULTS, ...saved.settings }, days: saved.days || {} };
+      state = { v: 2, uid: saved.uid || null, profile: saved.profile || null, settings: { ...DEFAULTS, ...saved.settings }, days: saved.days || {} };
       // ယခင် version ၏ မူလအချိန်များသည် တစ်ခုနှင့်တစ်ခု နီးလွန်းသဖြင့် အသစ်သို့ ပြောင်းပေးမည်
       if (!saved.v || saved.v < 2) {
         if (state.settings.lunch === '14:00') state.settings.lunch = DEFAULTS.lunch;
@@ -91,12 +140,12 @@
     const add = it => { it.order = items.length; items.push(it); };
 
     add({ id: 'wake', type: 'info', time: wake, title: 'အိပ်ရာထချိန်', icon: '☀️' });
-    add({ id: 'miracid', type: 'dose', med: 'miracid', time: wake, when: 'အိပ်ရာထထချင်း' });
-    add({ id: 'domp', type: 'dose', med: 'domp', time: wake, when: 'အိပ်ရာထထချင်း' });
+    const plan = P();
+    plan.wakeDoses.forEach(k => add({ id: k, type: 'dose', med: k, time: wake, when: 'အိပ်ရာထထချင်း' }));
 
-    // အစာတစ်နပ်နှင့်တစ်နပ်၊ Myonal တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားအောင် အစဉ်လိုက် တွက်သည်။
+    // အစာတစ်နပ်နှင့်တစ်နပ်၊ အစာပြီးသောက်ဆေး တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားအောင် အစဉ်လိုက် တွက်သည်။
     // အစာ သို့မဟုတ် ဆေးကို နောက်ကျမှ စား/သောက်ခဲ့လျှင် နောက်အကြိမ်များကို အလိုအလျောက် နောက်ရွှေ့ပေးသည်။
-    const WHEN = { breakfast: 'မနက်စာ စားပြီး', lunch: 'နေ့လယ်စာ စားပြီး', dinner: 'ညစာ စားပြီး' };
+    const WHEN = plan.when;
     let prevMeal = null, prevDose = null, lastMeal = 0;
     ['breakfast', 'lunch', 'dinner'].forEach((mealId, i) => {
       const set = n(toMin(s[mealId]));
@@ -104,10 +153,10 @@
       const mealTime = eaten(mealId) != null ? eaten(mealId) : planned;
       add({ id: mealId, type: 'meal', time: mealTime, shifted: eaten(mealId) == null && planned > set });
 
-      const doseId = 'myonal' + (i + 1), rec = day.doses[doseId];
+      const doseId = plan.dosePrefix + (i + 1), rec = day.doses[doseId];
       const base = eaten(mealId) != null ? mealTime : mealTime + 30;
       const doseTime = prevDose == null ? base : Math.max(base, prevDose + MYONAL_GAP);
-      add({ id: doseId, type: 'dose', med: 'myonal', time: doseTime, when: WHEN[mealId], meal: mealId, shifted: doseTime > base ? 'myonal' : null });
+      add({ id: doseId, type: 'dose', med: plan.afterMeal, time: doseTime, when: WHEN[mealId], meal: mealId, gap: true, shifted: doseTime > base ? 'gap' : null });
 
       // နောက်အကြိမ်အတွက် ကိုးကားမည့်အချိန် — တကယ်သောက်ခဲ့သောအချိန်၊ မသောက်ရသေးလျှင် စီစဉ်ထားချိန်၊ ကျော်ခဲ့လျှင် မထည့်တွက်
       if (!rec) prevDose = doseTime;
@@ -115,8 +164,10 @@
       prevMeal = mealTime; lastMeal = mealTime;
     });
 
-    const bed = n(toMin(s.bed)), clonaTime = Math.max(bed, lastMeal + CLONA_GAP);
-    add({ id: 'clona', type: 'dose', med: 'clona', time: clonaTime, when: 'အိပ်ခါနီး', shifted: clonaTime > bed ? 'clona' : null });
+    if (plan.bedDose) {
+      const bed = n(toMin(s.bed)), clonaTime = Math.max(bed, lastMeal + CLONA_GAP);
+      add({ id: 'clona', type: 'dose', med: 'clona', time: clonaTime, when: 'အိပ်ခါနီး', shifted: clonaTime > bed ? 'clona' : null });
+    }
 
     return items.sort((a, b) => a.time - b.time || a.order - b.order);
   }
@@ -129,7 +180,7 @@
     if (now > it.time + MISSED_AFTER) return 'missed';
     return now >= it.time ? 'due' : 'upcoming';
   }
-  const titleOf = it => it.type === 'dose' ? MEDS[it.med].name : it.type === 'meal' ? MEALS[it.id].name : it.title;
+  const titleOf = it => it.type === 'dose' ? MEDS[it.med].name : it.type === 'meal' ? P().meals[it.id].name : it.title;
 
   /* ---------- ပြသခြင်း ---------- */
   const BTN = 'rounded-xl font-medium px-4 py-2.5 text-sm transition-colors';
@@ -146,7 +197,7 @@
     const cur = steps.find(pending);
     const taken = Object.values(day.doses).filter(r => r.status === 'taken').length;
     $('#stepCount').textContent = cur ? `အဆင့် ${bn(steps.indexOf(cur) + 1)} / ${bn(steps.length)}` : 'အားလုံး ပြီးပါပြီ';
-    $('#progressText').textContent = `ဆေး ${bn(taken)}/${bn(TOTAL_DOSES)} ကြိမ် သောက်ပြီး`;
+    $('#progressText').textContent = `ဆေး ${bn(taken)}/${bn(P().doseIds.length)} ကြိမ် သောက်ပြီး`;
     $('#stepDots').innerHTML = steps.map(it => {
       const st = statusOf(it, day, now);
       const c = it === cur ? (st === 'missed' ? 'bg-rose-500' : 'bg-amber-400') : st === 'taken' || st === 'done' ? 'bg-emerald-500' : st === 'skipped' ? 'bg-slate-400' : st === 'missed' ? 'bg-rose-300' : 'bg-slate-200';
@@ -170,15 +221,15 @@
       </div>`;
     }
     const st = statusOf(it, day, now), isMeal = it.type === 'meal';
-    const info = isMeal ? MEALS[it.id] : MEDS[it.med];
+    const info = isMeal ? P().meals[it.id] : MEDS[it.med];
     const status = st === 'missed' ? ['လွတ်နေပါသည် — သတိရသည်နှင့် သောက်ပါ', 'text-rose-600', 'bg-rose-50']
       : st === 'due' ? ['ယခု အချိန်ကျပါပြီ', 'text-amber-600', 'bg-amber-50']
       : [`အချိန်မကျသေးပါ — ${fmtDur(it.time - now)} အကြာတွင်`, 'text-slate-500', 'bg-slate-100'];
     const shifted = it.shifted
-      ? `<p class="text-xs text-sky-700 mt-1">⏱ ${isMeal ? 'ယခင်အစာနှင့် ၄ နာရီ ခြားရန်' : it.shifted === 'myonal' ? 'ယခင် Myonal နှင့် အနည်းဆုံး ၄ နာရီ ခြားရန်' : 'ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်'} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : '';
+      ? `<p class="text-xs text-sky-700 mt-1">⏱ ${isMeal ? 'ယခင်အစာနှင့် ၄ နာရီ ခြားရန်' : it.shifted === 'gap' ? `ယခင် ${MEDS[it.med].name} နှင့် အနည်းဆုံး ၄ နာရီ ခြားရန်` : 'ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်'} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : '';
     const big = 'w-full rounded-2xl font-semibold text-lg py-4 transition-colors';
     const buttons = isMeal
-      ? `<button data-action="meal-done" data-id="${it.id}" class="${big} bg-sky-600 hover:bg-sky-700 text-white">✓ စားပြီးပြီ</button>`
+      ? `<button data-action="meal-done" data-id="${it.id}" class="${big} bg-sky-600 hover:bg-sky-700 text-white">✓ ${P().w.feedDone}</button>`
       : `<button data-action="dose-take" data-id="${it.id}" class="${big} bg-teal-600 hover:bg-teal-700 text-white">✓ သောက်ပြီးပြီ</button>
          <button data-action="dose-skip" data-id="${it.id}" class="w-full rounded-2xl py-3 text-slate-500 hover:bg-slate-50">ဒီတစ်ကြိမ် ကျော်မည်</button>`;
     return `<div class="text-center">
@@ -187,7 +238,7 @@
       <h2 class="text-2xl font-bold text-slate-900 mt-1">${info.name}</h2>
       ${isMeal ? '' : `<p class="text-sm text-slate-500">${info.sub}</p>`}
       <p class="mt-3 text-lg font-semibold text-slate-800">${fmtTime(it.time)}</p>
-      <p class="text-sm text-slate-600">${isMeal ? 'အစာစားချိန် — စားပြီးလျှင် နောက်အဆင့်တွင် Myonal သောက်ရန် ပြပါမည်' : `${it.when} · ${info.rule}`}</p>
+      <p class="text-sm text-slate-600">${isMeal ? P().w.mealHint : `${it.when} · ${info.rule}`}</p>
       ${shifted}
       ${st === 'missed' && !isMeal ? `<div class="mt-3 rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-900 text-left"><b>⚠️ မသောက်ရင် ဖြစ်မည့်ဆိုးကျိုး —</b> ${info.consequence}</div>` : ''}
       <div class="mt-5 space-y-1">${buttons}</div>
@@ -204,18 +255,18 @@
     }
 
     if (it.type === 'meal') {
-      const m = MEALS[it.id], done = st === 'done';
+      const m = P().meals[it.id], done = st === 'done';
       return `<li class="flex gap-3">${time}
         <div class="flex-1 min-w-0 rounded-2xl border px-4 py-3 ${done ? 'bg-emerald-50 border-emerald-200' : st === 'due' ? 'bg-white border-amber-300 ring-pulse' : 'bg-white border-slate-200'}">
           <div class="flex items-center justify-between gap-2 flex-wrap">
             <div class="min-w-0">
               <p class="font-semibold text-slate-800">${m.icon} ${m.name}</p>
-              <p class="text-sm ${done ? 'text-emerald-700' : st === 'due' ? 'text-amber-700' : 'text-slate-500'}">${done ? `✓ ${fmtTime(day.meals[it.id])} တွင် စားပြီး` : st === 'due' ? 'အစာစားချိန် ရောက်ပါပြီ' : 'အစာစားချိန်'}</p>
+              <p class="text-sm ${done ? 'text-emerald-700' : st === 'due' ? 'text-amber-700' : 'text-slate-500'}">${done ? `✓ ${fmtTime(day.meals[it.id])} တွင် ${P().w.fed}` : st === 'due' ? P().w.feedDue : P().w.feedTime}</p>
               ${it.shifted ? '<p class="text-xs text-sky-700">⏱ ယခင်အစာနှင့် ၄ နာရီ ခြားရန် အချိန်ကို နောက်ရွှေ့ထားသည်</p>' : ''}
             </div>
             ${done
               ? `<button data-action="meal-undo" data-id="${it.id}" class="text-sm text-slate-500 underline underline-offset-4">ပြန်ပြင်မည်</button>`
-              : `<button data-action="meal-done" data-id="${it.id}" class="${BTN} bg-sky-600 hover:bg-sky-700 text-white">စားပြီးပြီ</button>`}
+              : `<button data-action="meal-done" data-id="${it.id}" class="${BTN} bg-sky-600 hover:bg-sky-700 text-white">${P().w.feedDone}</button>`}
           </div>
         </div></li>`;
     }
@@ -249,21 +300,23 @@
           ${badge}
         </div>
         <p class="text-sm text-slate-600">${it.when} · ${med.rule}</p>
-        ${!rec && it.shifted ? `<p class="text-xs text-sky-700 mt-1">⏱ ${it.shifted === 'myonal' ? 'ယခင် Myonal နှင့် အနည်းဆုံး ၄ နာရီ ခြားရန်' : 'ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်'} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : ''}
+        ${!rec && it.shifted ? `<p class="text-xs text-sky-700 mt-1">⏱ ${it.shifted === 'gap' ? `ယခင် ${MEDS[it.med].name} နှင့် အနည်းဆုံး ၄ နာရီ ခြားရန်` : 'ညစာနှင့် အနည်းဆုံး ၂ နာရီ ခြားရန်'} အချိန်ကို နောက်ရွှေ့ထားသည်</p>` : ''}
         ${warn}
         <div class="mt-2.5 flex items-center gap-2 flex-wrap">${actions}</div>
       </div></li>`;
   }
 
   function renderAdvisories() {
-    const s = state.settings, wake = toMin(s.wake), n = m => (m < wake ? m + 1440 : m);
+    const s = state.settings, plan = P(), wake = toMin(s.wake), n = m => (m < wake ? m + 1440 : m);
     const b = n(toMin(s.breakfast)), l = n(toMin(s.lunch)), d = n(toMin(s.dinner)), bed = n(toMin(s.bed));
-    const out = [];
-    if (b - wake < 30) out.push('Miracid နှင့် Domp-M သည် အစာမစားမီ သောက်ရသောဆေးဖြစ်၍ အိပ်ရာထချိန်နှင့် မနက်စာကြား အနည်းဆုံး မိနစ် ၃၀ ခြားထားရန် အကြံပြုပါသည်။');
-    if (!(b < l && l < d)) out.push('အစာစားချိန်များ အစဉ်လိုက် မဖြစ်နေပါ — မနက်စာ၊ နေ့လယ်စာ၊ ညစာ အစီအစဉ်အတိုင်း ပြန်စစ်ပါ။');
-    else if (l - b < MYONAL_GAP || d - l < MYONAL_GAP) out.push('အစာစားချိန်များကြား ၄ နာရီ မခြားပါ — Myonal တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားစေရန် ဇယားထဲတွင် အချိန်ကို အလိုအလျောက် နောက်ရွှေ့ပေးထားပါသည်။');
-    if (bed <= d) out.push('အိပ်ရာဝင်ချိန်သည် ညစာထက် စောနေပါသည် — အချိန်ကို ပြန်စစ်ပါ။');
-    else if (bed - d < CLONA_GAP) out.push('ညစာနှင့် အိပ်ရာဝင်ချိန်ကြား ၂ နာရီ မခြားပါ — Clonazepam သောက်ချိန်ကို ညစာပြီး ၂ နာရီအကြာသို့ ရွှေ့ပေးထားပါသည်။');
+    const med = MEDS[plan.afterMeal].name, out = [];
+    if (plan.wakeDoses.length && b - wake < 30) out.push('Miracid နှင့် Domp-M သည် အစာမစားမီ သောက်ရသောဆေးဖြစ်၍ အိပ်ရာထချိန်နှင့် မနက်စာကြား အနည်းဆုံး မိနစ် ၃၀ ခြားထားရန် အကြံပြုပါသည်။');
+    if (!(b < l && l < d)) out.push('အချိန်များ အစဉ်လိုက် မဖြစ်နေပါ — မနက်၊ နေ့လယ်၊ ည အစီအစဉ်အတိုင်း ပြန်စစ်ပါ။');
+    else if (l - b < MYONAL_GAP || d - l < MYONAL_GAP) out.push(`အစာအချိန်များကြား ၄ နာရီ မခြားပါ — ${med} တစ်ကြိမ်နှင့်တစ်ကြိမ် အနည်းဆုံး ၄ နာရီ ခြားစေရန် ဇယားထဲတွင် အချိန်ကို အလိုအလျောက် နောက်ရွှေ့ပေးထားပါသည်။`);
+    if (plan.bedDose) {
+      if (bed <= d) out.push('အိပ်ရာဝင်ချိန်သည် ညစာထက် စောနေပါသည် — အချိန်ကို ပြန်စစ်ပါ။');
+      else if (bed - d < CLONA_GAP) out.push('ညစာနှင့် အိပ်ရာဝင်ချိန်ကြား ၂ နာရီ မခြားပါ — Clonazepam သောက်ချိန်ကို ညစာပြီး ၂ နာရီအကြာသို့ ရွှေ့ပေးထားပါသည်။');
+    }
     $('#advisories').innerHTML = out.map(t => `<p class="rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm px-3 py-2">💡 ${t}</p>`).join('');
   }
 
@@ -280,11 +333,11 @@
       const d = new Date(base); d.setDate(d.getDate() - i);
       const day = state.days[dateKey(d)];
       const taken = day ? Object.values(day.doses).filter(r => r.status === 'taken').length : 0;
-      const pct = Math.round(taken / TOTAL_DOSES * 100);
+      const pct = Math.round(taken / P().doseIds.length * 100);
       const color = !day ? 'bg-slate-200' : pct === 100 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-400' : 'bg-rose-400';
       cells.push(`<div class="text-center">
         <div class="h-20 bg-slate-100 rounded-lg flex items-end overflow-hidden"><div class="w-full ${color} rounded-lg" style="height:${Math.max(pct, 6)}%"></div></div>
-        <p class="text-xs font-semibold text-slate-700 mt-1">${bn(taken)}/${bn(TOTAL_DOSES)}</p>
+        <p class="text-xs font-semibold text-slate-700 mt-1">${bn(taken)}/${bn(P().doseIds.length)}</p>
         <p class="text-[11px] ${i === 0 ? 'text-teal-700 font-semibold' : 'text-slate-500'}">${i === 0 ? 'ယနေ့' : `${bn(d.getDate())}/${bn(d.getMonth() + 1)}`}</p>
       </div>`);
     }
@@ -296,11 +349,21 @@
     $('#drawer').classList.toggle('-translate-x-full', !open);
     $('#drawerShade').classList.toggle('hidden', !open);
   }
+  let currentView = 'home';
   function showView(id) {
+    currentView = id;
     document.querySelectorAll('[data-view]').forEach(el => el.classList.toggle('hidden', el.dataset.view !== id));
+    $('#prnBox').classList.toggle('hidden', id !== 'home' || !P().prn); // Gaviscon သည် ပုံမှန်အစီအစဉ်အတွက်သာ
     document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
     setDrawer(false);
     window.scrollTo(0, 0);
+  }
+  // ရွေးထားသော အစီအစဉ်အလိုက် အညွှန်းများ၊ သတိပေးချက်များကို ပြောင်းမည်
+  function applyProfile() {
+    fillInputs();
+    $('#profileName').textContent = P().label;
+    $('#warnList').innerHTML = P().warnings.map(([icon, text]) => `<li class="flex gap-2"><span>${icon}</span><span>${text}</span></li>`).join('');
+    showView(currentView);
   }
 
   /* ---------- Popup ---------- */
@@ -351,14 +414,15 @@
         });
         return;
       }
-      // Myonal ကို ယခင်အကြိမ်နှင့် ၄ နာရီ မခြားဘဲ သောက်ရန် ကြိုးစားလျှင် သတိပေးမည်
-      if (it.med === 'myonal') {
-        const prev = ['myonal1', 'myonal2', 'myonal3'].filter(k => k !== id && day.doses[k] && day.doses[k].status === 'taken').map(k => day.doses[k].min);
+      // အစာပြီးသောက်ဆေးကို ယခင်အကြိမ်နှင့် ၄ နာရီ မခြားဘဲ သောက်ရန် ကြိုးစားလျှင် သတိပေးမည်
+      const medName = MEDS[it.med].name;
+      if (it.gap) {
+        const prev = [1, 2, 3].map(i => P().dosePrefix + i).filter(k => k !== id && day.doses[k] && day.doses[k].status === 'taken').map(k => day.doses[k].min);
         const last = prev.length ? Math.max(...prev) : null;
         if (last != null && info.min - last < MYONAL_GAP) {
           openModal({
-            tone: 'rose', icon: '⏱', title: 'Myonal ကို ဆက်တိုက် မသောက်ပါနှင့်',
-            body: `<p>ယခင် Myonal ကို <b>${fmtTime(last)}</b> တွင် သောက်ထားပြီး <b>${fmtDur(info.min - last)}</b> သာ ရှိပါသေးသည်။</p><p>တစ်ကြိမ်နှင့်တစ်ကြိမ် <b>အနည်းဆုံး ၄ နာရီ</b> ခြားရပါမည်။ နောက်တစ်ကြိမ်ကို <b>${fmtTime(last + MYONAL_GAP)}</b> နောက်ပိုင်းမှ သောက်ပါ။</p>`,
+            tone: 'rose', icon: '⏱', title: `${medName} ကို ဆက်တိုက် မသောက်ပါနှင့်`,
+            body: `<p>ယခင် ${medName} ကို <b>${fmtTime(last)}</b> တွင် သောက်ထားပြီး <b>${fmtDur(info.min - last)}</b> သာ ရှိပါသေးသည်။</p><p>တစ်ကြိမ်နှင့်တစ်ကြိမ် <b>အနည်းဆုံး ၄ နာရီ</b> ခြားရပါမည်။ နောက်တစ်ကြိမ်ကို <b>${fmtTime(last + MYONAL_GAP)}</b> နောက်ပိုင်းမှ သောက်ပါ။</p>`,
             actions: [
               { label: `${fmtTime(last + MYONAL_GAP)} ကျမှ သောက်မည်`, primary: true },
               { label: 'သောက်ပြီးသွားပြီ — မှတ်တမ်းတင်မည်', danger: true, fn: () => takeDose(id) }
@@ -367,15 +431,16 @@
           return;
         }
       }
-      // Myonal ကို အစာမစားရသေးဘဲ သောက်ရန် ကြိုးစားလျှင် သတိပေးမည်
-      const mealId = it.meal;
+      // အစာမစား/မသွင်းရသေးဘဲ သောက်ရန် ကြိုးစားလျှင် သတိပေးမည်
+      const mealId = it.meal, w = P().w;
       if (mealId && day.meals[mealId] == null) {
+        const mealName = P().meals[mealId].name;
         openModal({
-          tone: 'amber', icon: '🍽️', title: `${MEALS[mealId].name} စားပြီးပြီလား?`,
-          body: `<p>Myonal ကို <b>အစာစားပြီးမှ</b> သောက်ရပါမည်။ ${MEALS[mealId].name} စားပြီးကြောင်း မမှတ်ရသေးပါ။</p>`,
+          tone: 'amber', icon: '🍽️', title: `${mealName} ${w.fed}ပြီလား?`,
+          body: `<p>${medName} ကို <b>${w.afterFeed}</b> သောက်ရပါမည်။ ${mealName} ${w.fed}ကြောင်း မမှတ်ရသေးပါ။</p>`,
           actions: [
-            { label: 'စားပြီးပြီ — ဆေးလည်း သောက်ပြီးပြီ', primary: true, fn: () => { getDay(info.key).meals[mealId] = nowInfo().min; takeDose(id); } },
-            { label: 'မစားရသေးပါ — စားပြီးမှ သောက်မည်' }
+            { label: `${w.feedDone} — ဆေးလည်း သောက်ပြီးပြီ`, primary: true, fn: () => { getDay(info.key).meals[mealId] = nowInfo().min; takeDose(id); } },
+            { label: w.notFed }
           ]
         });
         return;
@@ -397,11 +462,11 @@
     }
 
     else if (action === 'dose-undo') { delete day.doses[id]; day.warned[id] = true; }
-    else if (action === 'meal-done') { day.meals[id] = info.min; toast(`✓ ${MEALS[id].name} စားပြီးကြောင်း မှတ်ပြီးပါပြီ`, 'teal'); }
+    else if (action === 'meal-done') { day.meals[id] = info.min; toast(`✓ ${P().meals[id].name} ${P().w.fed}ကြောင်း မှတ်ပြီးပါပြီ`, 'teal'); }
     else if (action === 'meal-undo') { delete day.meals[id]; }
     else if (action === 'prn-add') { day.prn.push(info.min); toast('✓ Gaviscon သောက်ကြောင်း မှတ်ပြီးပါပြီ', 'teal'); }
     else if (action === 'prn-remove') { day.prn.splice(+id, 1); }
-    else if (action === 'reset-times') { state.settings = { ...DEFAULTS }; fillInputs(); afterTimeChange(); }
+    else if (action === 'reset-times') { state.settings = { ...P().defaults }; fillInputs(); afterTimeChange(); }
     else if (action === 'enable-notif') { enableNotifications(); return; }
     else if (action === 'install') { installApp(); return; }
     else if (action === 'sign-in') { signIn(); return; }
@@ -410,6 +475,14 @@
     else if (action === 'open-drawer') { setDrawer(true); return; }
     else if (action === 'close-drawer') { setDrawer(false); return; }
     else if (action === 'view') { showView(id); return; }
+    else if (action === 'change-profile') { gate('profile'); return; }
+    else if (action === 'pick-profile') {
+      state.profile = id;
+      if (!cloud.synced.settings) state.settings = { ...P().defaults }; // account အသစ် — ထိုအစီအစဉ်၏ မူလအချိန်များဖြင့် စမည်
+      saveLocal(); cloudPush();
+      unlock();
+      return;
+    }
 
     save(); render();
   }
@@ -426,7 +499,9 @@
   const toHHMM = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
   function fillInputs() {
     FIELDS.forEach(f => {
-      const el = $('#t-' + f), [from, to] = RANGES[f];
+      const el = $('#t-' + f), [from, to] = RANGES[f], lab = el.closest('label');
+      lab.classList.toggle('hidden', !P().fields.includes(f));
+      lab.querySelector('span').textContent = P().fieldLabels[f];
       const cur = Math.round(toMin(state.settings[f]) / 30) * 30 % 1440;
       const opts = [];
       for (let m = from; m <= to; m += 30) opts.push(m % 1440);
@@ -513,8 +588,8 @@
     items.forEach(it => {
       if (it.type === 'info' || day.notified[it.id]) return;
       if (statusOf(it, day, now) !== 'due' || now - it.time > NOTIFY_WINDOW) return;
-      const title = it.type === 'meal' ? `${MEALS[it.id].icon} ${MEALS[it.id].name} စားချိန် ရောက်ပါပြီ` : `💊 ${MEDS[it.med].name} သောက်ချိန် ရောက်ပါပြီ`;
-      const body = it.type === 'meal' ? `${fmtTime(it.time)} — အစာစားပြီးနောက် Myonal သောက်ရန် မမေ့ပါနှင့်။` : `${it.when} · ${MEDS[it.med].rule}`;
+      const title = it.type === 'meal' ? `${P().meals[it.id].icon} ${P().meals[it.id].name} ${P().w.feedArrive}` : `💊 ${MEDS[it.med].name} သောက်ချိန် ရောက်ပါပြီ`;
+      const body = it.type === 'meal' ? `${fmtTime(it.time)} — ${P().w.mealNotify}` : `${it.when} · ${MEDS[it.med].rule}`;
       pushNotify(title, body, it.id);
       toast(title, 'amber', 9000);
       day.notified[it.id] = true; changed = true; ring = true;
@@ -532,7 +607,7 @@
         openModal({
           tone: 'rose', icon: '⚠️', title: 'ဆေးသောက်ရန် လွတ်နေပါသည်',
           body: `<p>အောက်ပါဆေးများကို သတ်မှတ်ချိန်တွင် မသောက်ရသေးပါ —</p>${meds.map(consequenceBox).join('')}
-                 <p class="text-sm text-slate-600">သတိရသည်နှင့် သောက်နိုင်ပါသည်။ သို့သော် နောက်တစ်ကြိမ် သောက်ချိန်နှင့် နီးနေပါက <b>နှစ်ဆတိုး၍ မသောက်ပါနှင့်။</b> Clonazepam ကို အိပ်ရာဝင်ချိန်တွင်သာ သောက်ပါ။</p>`,
+                 <p class="text-sm text-slate-600">သတိရသည်နှင့် သောက်နိုင်ပါသည်။ သို့သော် နောက်တစ်ကြိမ် သောက်ချိန်နှင့် နီးနေပါက <b>နှစ်ဆတိုး၍ မသောက်ပါနှင့်။</b>${P().bedDose ? ' Clonazepam ကို အိပ်ရာဝင်ချိန်တွင်သာ သောက်ပါ။' : ''}</p>`,
           actions: [{ label: 'နားလည်ပါပြီ — အချိန်ဇယားကို ကြည့်မည်', primary: true }]
         });
       }
@@ -567,9 +642,9 @@
      Cloud တွင် users/{uid} (အချိန်ဆက်တင်) နှင့် users/{uid}/days/{ရက်စွဲ} (နေ့စဉ်မှတ်တမ်း) အဖြစ် သိမ်းသည်။
      အသိပေးပြီး/မပြီး (notified, warned) ကို စက်တစ်လုံးချင်းစီတွင်သာ ထားသည်။ */
   const FB_VER = '10.14.1';
-  const DOSE_IDS = ['miracid', 'domp', 'myonal1', 'myonal2', 'myonal3', 'clona'];
+  const DOSE_IDS = [...PROFILES.standard.doseIds, ...PROFILES.tube.doseIds];
   const MEAL_IDS = ['breakfast', 'lunch', 'dinner'];
-  const cloud = { ready: false, user: null, error: null, unsub: [], synced: { settings: null, days: {} } };
+  const cloud = { ready: false, user: null, error: null, unsub: [], synced: { settings: null, profile: null, days: {} } };
   // key အစီအစဉ် မတူလည်း တန်ဖိုးတူလျှင် တူသည်ဟု ယူဆရန်
   const canon = v => JSON.stringify(v == null ? null : v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, key) => { o[key] = x[key]; return o; }, {}) : x);
   const same = (a, b) => canon(a) === canon(b);
@@ -577,11 +652,11 @@
 
   // ဤစက်တွင် ပြောင်းလဲသွားသော အကွက်များကိုသာ cloud သို့ ပို့မည် (အခြားဖုန်း၏ မှတ်တမ်းကို မဖျက်မိစေရန်)
   function cloudPush() {
-    if (!cloud.ready) return;
+    if (!cloud.ready || !state.profile) return;
     const { fs, db, user } = cloud;
-    if (!same(state.settings, cloud.synced.settings)) {
-      cloud.synced.settings = copy(state.settings);
-      fs.setDoc(fs.doc(db, 'users', user.uid), { settings: state.settings, updatedAt: fs.serverTimestamp() }, { merge: true }).catch(cloudError);
+    if (!same(state.settings, cloud.synced.settings) || state.profile !== cloud.synced.profile) {
+      cloud.synced.settings = copy(state.settings); cloud.synced.profile = state.profile;
+      fs.setDoc(fs.doc(db, 'users', user.uid), { settings: state.settings, profile: state.profile, updatedAt: fs.serverTimestamp() }, { merge: true }).catch(cloudError);
     }
     Object.keys(state.days).forEach(key => {
       const d = state.days[key], was = cloud.synced.days[key] || { doses: {}, meals: {}, prn: [] };
@@ -614,7 +689,8 @@
     checking: 'စစ်ဆေးနေပါသည်…',
     signin: 'ဆက်လက်အသုံးပြုရန် သင့် Google account ဖြင့် ဝင်ပါ။',
     loading: 'မှတ်တမ်းများ ယူနေပါသည်…',
-    error: 'ချိတ်ဆက်၍ မရပါ — အင်တာနက်ကို စစ်ပြီး ပြန်ကြိုးစားပါ။'
+    error: 'ချိတ်ဆက်၍ မရပါ — အင်တာနက်ကို စစ်ပြီး ပြန်ကြိုးစားပါ။',
+    profile: 'သင်သည် ပိုက်ဖြင့် အစာသွင်းရသော ကင်ဆာလူနာ ဖြစ်ပါသလား?'
   };
   function gate(mode, err) {
     unlocked = false;
@@ -622,17 +698,18 @@
     $('#gateStatus').textContent = GATE_TEXT[mode];
     $('#gateBtn').classList.toggle('hidden', mode !== 'signin');
     $('#gateRetry').classList.toggle('hidden', mode !== 'error');
+    $('#gateProfile').classList.toggle('hidden', mode !== 'profile');
     $('#gateErr').textContent = err ? `အမှား — ${err}` : '';
   }
   function unlock() {
     if (unlocked) return;
     unlocked = true;
     $('#gate').classList.add('hidden'); $('#app').classList.remove('hidden');
-    fillInputs(); tick();
+    applyProfile(); tick();
   }
   // ဤစက်ထဲတွင် သိမ်းထားသော မှတ်တမ်းအားလုံးကို ဖျက်မည် (ထွက်လိုက်ချိန်၊ အခြား account ဝင်လာချိန်)
   function wipeLocal() {
-    state = { v: 2, uid: null, settings: { ...DEFAULTS }, days: {} };
+    state = { v: 2, uid: null, profile: null, settings: { ...DEFAULTS }, days: {} };
     try { localStorage.removeItem(STORE_KEY); } catch (e) {}
   }
   async function signOutUser() {
@@ -646,7 +723,7 @@
 
   function onUser(user) {
     cloud.unsub.forEach(f => f()); cloud.unsub = [];
-    cloud.ready = false; cloud.user = user; cloud.synced = { settings: null, days: {} };
+    cloud.ready = false; cloud.user = user; cloud.synced = { settings: null, profile: null, days: {} };
     if (!user) {
       if (state.uid) wipeLocal();
       gate('signin', cloud.error);
@@ -659,22 +736,30 @@
     if (!unlocked) {
       gate('loading');
       // cloud မှ အဖြေ ကြာနေလျှင် (အင်တာနက်နှေးချိန်) ဤစက်ထဲရှိ မှတ်တမ်းဖြင့် ဆက်သွားမည်
-      setTimeout(() => { if (cloud.user === user) unlock(); }, 8000);
+      setTimeout(() => { if (cloud.user === user && state.profile) unlock(); }, 8000);
     }
     const { fs, db } = cloud;
     let gotSettings = false, gotDays = false, firstDays = true;
     const done = () => {
       if (!gotSettings || !gotDays) return;
       cloud.ready = true;
+      renderAccount();
+      // Account အသစ် (cloud တွင် ဘာမှမရှိသေး) — မည်သည့်အစီအစဉ်ကို သုံးမည်ကို အရင်မေးမည်
+      if (!state.profile) { gate('profile'); return; }
       saveLocal(); cloudPush();
       if (unlocked) render(); else unlock();
-      renderAccount();
     };
     cloud.unsub.push(fs.onSnapshot(fs.doc(db, 'users', user.uid), snap => {
       const r = snap.data();
+      if (r) {
+        // အစီအစဉ်မရွေးခင်က ရှိပြီးသား account များသည် ပုံမှန်အစီအစဉ် ဖြစ်သည်
+        const prof = PROFILES[r.profile] ? r.profile : (r.settings ? 'standard' : null);
+        cloud.synced.profile = r.profile || null;
+        if (prof && prof !== state.profile) { state.profile = prof; if (unlocked) applyProfile(); }
+      }
       if (r && r.settings) {
         cloud.synced.settings = copy(r.settings);
-        const merged = { ...DEFAULTS, ...r.settings };
+        const merged = { ...P().defaults, ...r.settings };
         if (!same(state.settings, merged)) { state.settings = merged; fillInputs(); }
       }
       gotSettings = true; done();
@@ -735,7 +820,7 @@
 
   async function cloudInit() {
     let cfg = window.FIREBASE_CONFIG;
-    if (!cfg || !cfg.apiKey) { unlock(); return; } // config မရှိလျှင် login မလိုဘဲ ဤစက်ထဲတွင်သာ သုံးမည်
+    if (!cfg || !cfg.apiKey) { if (!state.profile) state.profile = 'standard'; unlock(); return; } // config မရှိလျှင် login မလိုဘဲ ဤစက်ထဲတွင်သာ သုံးမည်
     // Login စာမျက်နှာကို ဤ site ၏ ကိုယ်ပိုင် domain မှတစ်ဆင့် သွားစေသည် (netlify.toml ထဲရှိ /__/auth/* proxy)။
     // ထိုသို့မလုပ်လျှင် iPhone နှင့် ဖုန်း browser များတွင် "missing initial state" အမှားဖြင့် login မဝင်နိုင်ပါ။
     if (!LOCAL_HOST) cfg = { ...cfg, authDomain: location.host };
