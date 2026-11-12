@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<meta name="description" content="ဆေးသောက်ချိန်နှင့် အစားအစာ အချိန်ဇယား မှတ်တမ်း">
+<title>ဆေးနှင့် အစားအစာ အချိန်ဇယား</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['"Noto Sans Myanmar"', 'Padauk', '"Myanmar Text"', 'Pyidaungsu', 'system-ui', 'sans-serif'] }
+      }
+    }
+  };
+</script>
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: "Noto Sans Myanmar", Padauk, "Myanmar Text", Pyidaungsu, system-ui, sans-serif; line-height: 1.9; }
+  input[type="time"] { font-family: system-ui, sans-serif; }
+  @keyframes pop { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+  .pop { animation: pop .22s ease-out; }
+  .slide-in { animation: slideIn .25s ease-out; }
+  @keyframes ring { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,.45); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
+  .ring-pulse { animation: ring 1.8s infinite; }
+  @media (prefers-reduced-motion: reduce) { .pop, .slide-in, .ring-pulse { animation: none; } }
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+<!-- ခေါင်းစီး -->
+<header class="bg-gradient-to-br from-teal-700 via-teal-600 to-cyan-600 text-white">
+  <div class="max-w-3xl mx-auto px-4 pt-6 pb-20">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="text-teal-100 text-sm" id="todayDate"></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mt-1 leading-snug">ဆေးနှင့် အစားအစာ အချိန်ဇယား</h1>
+        <p class="text-teal-100 text-sm mt-1">နေ့စဉ် ဆေးသောက်ချိန် မလွတ်စေရန် ကူညီပေးမည်</p>
+      </div>
+      <div class="text-right shrink-0">
+        <p class="text-xs text-teal-100">ယခုအချိန်</p>
+        <p class="text-xl font-semibold whitespace-nowrap" id="clock"></p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-3xl mx-auto px-4 -mt-14 pb-16 space-y-5">
+
+  <!-- ယနေ့ တိုးတက်မှု + နောက်တစ်ခု -->
+  <section class="bg-white rounded-2xl shadow-lg shadow-teal-900/10 p-5">
+    <div class="flex items-center justify-between gap-4">
+      <div class="min-w-0">
+        <p class="text-sm text-slate-500">ယနေ့ ဆေးသောက်ပြီးမှု</p>
+        <p class="text-2xl font-bold text-teal-700" id="progressText"></p>
+      </div>
+      <div class="text-right min-w-0">
+        <p class="text-sm text-slate-500">နောက်တစ်ခု</p>
+        <p class="font-semibold text-slate-800 truncate" id="nextTitle"></p>
+        <p class="text-sm" id="nextWhen"></p>
+      </div>
+    </div>
+    <div class="mt-3 h-3 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-label="ယနေ့ ဆေးသောက်ပြီးမှု">
+      <div id="progressBar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-500" style="width:0%"></div>
+    </div>
+  </section>
+
+  <!-- အချိန် သတ်မှတ်ရန် -->
+  <section class="bg-white rounded-2xl shadow-sm p-5">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <h2 class="text-lg font-bold text-slate-800">⏰ ကျွန်ုပ်၏ နေ့စဉ်အချိန်များ</h2>
+      <button data-action="reset-times" class="text-sm text-teal-700 hover:text-teal-900 underline underline-offset-4">မူလအချိန်သို့ ပြန်ထားမည်</button>
+    </div>
+    <p class="text-sm text-slate-500 mt-1">အချိန်ပြောင်းလိုက်သည်နှင့် ဆေးသောက်ချိန်ဇယား အလိုအလျောက် ပြန်တွက်ပေးပါမည်။</p>
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
+      <label class="block">
+        <span class="text-sm font-medium text-slate-600">☀️ အိပ်ရာထချိန်</span>
+        <input type="time" id="t-wake" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium text-slate-600">🍳 မနက်စာ</span>
+        <input type="time" id="t-breakfast" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium text-slate-600">🍚 နေ့လယ်စာ</span>
+        <input type="time" id="t-lunch" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium text-slate-600">🍲 ညစာ</span>
+        <input type="time" id="t-dinner" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+      </label>
+      <label class="block col-span-2 sm:col-span-1">
+        <span class="text-sm font-medium text-slate-600">🌙 အိပ်ရာဝင်ချိန်</span>
+        <input type="time" id="t-bed" class="time-input mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+      </label>
+    </div>
+    <div id="advisories" class="mt-3 space-y-2"></div>
+
+    <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+      <div class="min-w-0">
+        <p class="font-medium text-slate-700">🔔 အသိပေးချက်များ</p>
+        <p class="text-sm text-slate-500" id="notifStatus"></p>
+      </div>
+      <button id="notifBtn" data-action="enable-notif" class="rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-4 py-2.5 text-sm">အသိပေးချက် ဖွင့်မည်</button>
+    </div>
+  </section>
+
+  <!-- ယနေ့ အချိန်ဇယား -->
+  <section>
+    <h2 class="text-lg font-bold text-slate-800 px-1 mb-3">📋 ယနေ့ အချိန်ဇယား</h2>
+    <ol id="timeline" class="space-y-3"></ol>
+  </section>
+
+  <!-- လိုအပ်မှသောက်ရန် -->
+  <section class="bg-white rounded-2xl shadow-sm p-5 border-l-4 border-violet-400">
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+      <div class="min-w-0">
+        <span class="inline-block text-xs font-semibold bg-violet-100 text-violet-700 rounded-full px-2.5 py-0.5">လိုအပ်မှသာ သောက်ရန် (PRN)</span>
+        <h2 class="text-lg font-bold mt-1">🧴 Gaviscon (ဆေးရည်)</h2>
+        <p class="text-sm text-slate-600">ရင်ပူခြင်း၊ အက်ဆစ်ပြန်တက်ခြင်း ခံစားရမှသာ ဆရာဝန်ညွှန်ကြားထားသည့် ပမာဏအတိုင်း သောက်ပါ။</p>
+      </div>
+      <button data-action="prn-add" class="rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2.5 text-sm shrink-0">＋ ယခု သောက်လိုက်သည်</button>
+    </div>
+    <div id="prnLog" class="mt-3"></div>
+  </section>
+
+  <!-- ဆေးဘက်ဆိုင်ရာ သတိပေးချက်များ -->
+  <section class="bg-rose-50 border border-rose-200 rounded-2xl p-5">
+    <h2 class="text-lg font-bold text-rose-800">⚠️ အရေးကြီး သတိပေးချက်များ</h2>
+    <ul class="mt-3 space-y-2.5 text-sm text-rose-900">
+      <li class="flex gap-2"><span>🌙</span><span><b>Clonazepam (Prenarpil 0.5 mg)</b> ကို တစ်နေ့ တစ်ကြိမ်တည်း၊ <b>အိပ်ရာဝင်ချိန်တွင်သာ</b> သောက်ပါ။ နေ့ခင်းဘက် လုံးဝ မသောက်ပါနှင့်။</span></li>
+      <li class="flex gap-2"><span>🚫</span><span><b>အရက် လုံးဝ မသောက်ပါနှင့်။</b> Clonazepam၊ Myonal တို့နှင့် အရက်တွဲမိပါက အလွန်အမင်း ငိုက်မျဉ်းခြင်း၊ မူးဝေခြင်းနှင့် အသက်ရှူနှေးခြင်းတို့ ဖြစ်နိုင်ပါသည်။</span></li>
+      <li class="flex gap-2"><span>🚗</span><span>Clonazepam သို့မဟုတ် Myonal သောက်ပြီးနောက် ငိုက်မျဉ်းနိုင်သဖြင့် ယာဉ်မမောင်းပါနှင့်၊ စက်ကိရိယာများ မကိုင်တွယ်ပါနှင့်။</span></li>
+      <li class="flex gap-2"><span>✖️</span><span>လွတ်သွားသော ဆေးအတွက် <b>နှစ်ဆတိုး၍ မသောက်ပါနှင့်။</b></span></li>
+      <li class="flex gap-2"><span>🩺</span><span>ဆရာဝန် မညွှန်ကြားဘဲ ဆေးပမာဏ မတိုးပါနှင့်၊ မလျှော့ပါနှင့်၊ Clonazepam ကို ရုတ်တရက် မဖြတ်ပါနှင့်။</span></li>
+      <li class="flex gap-2"><span>🍽️</span><span><b>Miracid</b> နှင့် <b>Domp-M</b> ကို ဗိုက်ထဲ အစာမရှိချိန် (မနက်စာ မစားမီ) သောက်ပါ။ <b>Myonal</b> ကို အစာစားပြီးမှ သောက်ပါ။</span></li>
+    </ul>
+  </section>
+
+  <!-- ၇ ရက် မှတ်တမ်း -->
+  <section class="bg-white rounded-2xl shadow-sm p-5">
+    <h2 class="text-lg font-bold text-slate-800">📊 လွန်ခဲ့သော ၇ ရက် မှတ်တမ်း</h2>
+    <div id="history" class="mt-4 grid grid-cols-7 gap-2 items-end"></div>
+  </section>
+
+  <footer class="text-center text-xs text-slate-500 px-4 leading-relaxed">
+    ဤအက်ပ်သည် သတိပေးရန်အတွက်သာ ဖြစ်ပြီး ဆရာဝန်၏ ညွှန်ကြားချက်ကို အစားမထိုးနိုင်ပါ။ သံသယရှိပါက သင့်ဆရာဝန် သို့မဟုတ် ဆေးဝါးကျွမ်းကျင်သူနှင့် တိုင်ပင်ပါ။<br>
+    မှတ်တမ်းများကို ဤစက်ထဲတွင်သာ သိမ်းဆည်းထားပါသည်။
+  </footer>
+</main>
+
+<!-- အသိပေး toast များ -->
+<div id="toasts" class="fixed top-3 inset-x-0 z-40 px-3 flex flex-col items-center gap-2 pointer-events-none" aria-live="polite"></div>
+
+<!-- popup -->
+<div id="modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" role="dialog" aria-modal="true">
+  <div id="modalCard" class="pop bg-white w-full max-w-md rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"></div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------- အခြေခံ အချက်အလက် ---------- */
+  const DEFAULTS = { wake: '10:00', breakfast: '10:30', lunch: '14:00', dinner: '19:00', bed: '01:00' };
+  const STORE_KEY = 'med-meal-tracker-v1';
+  const MISSED_AFTER = 60;   // မိနစ် — ဤမျှကျော်လျှင် "လွတ်သွားပြီ" ဟု သတ်မှတ်
+  const NOTIFY_WINDOW = 30;  // မိနစ် — အချိန်ကျပြီး ဤအတွင်းသာ အသိပေး
+
+  const C_STOMACH = 'အစာအိမ်အက်ဆစ်ပြန်တက်ခြင်း၊ ရင်ပူခြင်း၊ လည်ပင်းတစ်စို့ဖြစ်ခြင်းနှင့် လေတက်ခြင်းများ ဆိုးရွားစွာ ပြန်ဖြစ်လာနိုင်ပါသည်။';
+  const MEDS = {
+    miracid: { name: 'Miracid', sub: 'Omeprazole', icon: '💊', rule: 'ဗိုက်ထဲ အစာမရှိချိန် — မနက်စာ မစားမီ သောက်ရန်', consequence: C_STOMACH },
+    domp:    { name: 'Domp-M', sub: 'အော့အန်/လေတက် သက်သာဆေး', icon: '💊', rule: 'ဗိုက်ထဲ အစာမရှိချိန် — မနက်စာ မစားမီ သောက်ရန်', consequence: C_STOMACH },
+    myonal:  { name: 'Myonal', sub: 'Eperisone 50 mg · ကြွက်သားလျော့ဆေး', icon: '💪', rule: 'အစာစားပြီးမှ သောက်ရန် (တစ်နေ့ ၃ ကြိမ်)', consequence: 'ကျောအောင့်ခြင်း၊ ကြွက်သားတင်းခြင်းနှင့် ခန္ဓာကိုယ် တောင့်တင်းကိုက်ခဲမှုများ ပြန်ဖြစ်လာနိုင်ပါသည်။' },
+    clona:   { name: 'Clonazepam', sub: 'Prenarpil 0.5 mg', icon: '🌙', rule: 'တစ်နေ့ တစ်ကြိမ်တည်း — အိပ်ရာဝင်ချိန်တွင်သာ သောက်ရန်', consequence: 'ညဘက် အိပ်မပျော်ခြင်း၊ စိုးရိမ်ပူပန်မှုများ မြင့်တက်ခြင်းနှင့် အိပ်ရေးပျက်ခြင်းတို့ ဖြစ်စေနိုင်ပါသည်။' }
+  };
+  const MEALS = {
+    breakfast: { name: 'မနက်စာ', icon: '🍳' },
+    lunch:     { name: 'နေ့လယ်စာ', icon: '🍚' },
+    dinner:    { name: 'ညစာ', icon: '🍲' }
+  };
+  const TOTAL_DOSES = 6;
+
+  /* ---------- အထောက်အကူ function များ ---------- */
+  const $ = s => document.querySelector(s);
+  const bn = v => String(v).replace(/\d/g, d => '၀၁၂၃၄၅၆၇၈၉'[d]);
+  const pad = n => String(n).padStart(2, '0');
+  const toMin = hhmm => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
+  const WEEKDAYS = ['တနင်္ဂနွေ', 'တနင်္လာ', 'အင်္ဂါ', 'ဗုဒ္ဓဟူး', 'ကြာသပတေး', 'သောကြာ', 'စနေ'];
+  const MONTHS = ['ဇန်နဝါရီ', 'ဖေဖော်ဝါရီ', 'မတ်', 'ဧပြီ', 'မေ', 'ဇွန်', 'ဇူလိုင်', 'ဩဂုတ်', 'စက်တင်ဘာ', 'အောက်တိုဘာ', 'နိုဝင်ဘာ', 'ဒီဇင်ဘာ'];
+
+  function fmtTime(min) {
+    const m = ((min % 1440) + 1440) % 1440, h = Math.floor(m / 60), mm = m % 60;
+    const period = h < 4 ? 'ည' : h < 12 ? 'မနက်' : h < 16 ? 'နေ့လယ်' : h < 19 ? 'ညနေ' : 'ည';
+    return `${period} ${bn(h % 12 || 12)}:${bn(pad(mm))}`;
+  }
+  function fmtDur(min) {
+    const h = Math.floor(min / 60), m = min % 60;
+    return (h ? `${bn(h)} နာရီ ` : '') + (m || !h ? `${bn(m)} မိနစ်` : '');
+  }
+  const dateKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const keyToDate = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+
+  /* ---------- သိမ်းဆည်းမှု ---------- */
+  let state = { settings: { ...DEFAULTS }, days: {} };
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (saved && saved.settings) state = { settings: { ...DEFAULTS, ...saved.settings }, days: saved.days || {} };
+  } catch (e) { /* သိမ်းထားချက် မရှိ/မဖတ်နိုင် — မူလတန်ဖိုးသုံးမည် */ }
+
+  function save() {
+    const keys = Object.keys(state.days).sort();
+    while (keys.length > 30) delete state.days[keys.shift()];
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  /* ---------- "ယနေ့" ကို သတ်မှတ်ခြင်း ----------
+     ညသန်းခေါင်ကျော်မှ အိပ်သူအတွက် နေ့သစ်ကို အိပ်ရာထချိန် မတိုင်မီ ၃ နာရီမှ စတင်သည်။
+     ထို့ကြောင့် ည ၁ နာရီတွင် သောက်ရမည့် အိပ်ဆေးသည် ယခင်နေ့၏ ဇယားထဲတွင်သာ ရှိနေမည်။ */
+  function nowInfo() {
+    const d = new Date();
+    const clock = d.getHours() * 60 + d.getMinutes();
+    const boundary = Math.max(0, toMin(state.settings.wake) - 180);
+    if (clock < boundary) {
+      const y = new Date(d); y.setDate(y.getDate() - 1);
+      return { key: dateKey(y), min: clock + 1440, date: y, real: d };
+    }
+    return { key: dateKey(d), min: clock, date: d, real: d };
+  }
+  function getDay(key) {
+    if (!state.days[key]) state.days[key] = { doses: {}, meals: {}, prn: [], notified: {}, warned: {} };
+    return state.days[key];
+  }
+
+  /* ---------- အချိန်ဇယား တွက်ချက်ခြင်း ---------- */
+  function buildSchedule(day) {
+    const s = state.settings, wake = toMin(s.wake);
+    const n = m => (m < wake ? m + 1440 : m);
+    const meal = { breakfast: n(toMin(s.breakfast)), lunch: n(toMin(s.lunch)), dinner: n(toMin(s.dinner)) };
+    // အစာစားပြီးကြောင်း မှတ်ထားလျှင် ထိုအချိန်မှစ၍ Myonal သောက်နိုင်ပြီ၊ မဟုတ်လျှင် အစာစားချိန် + မိနစ် ၃၀
+    const after = id => (day.meals[id] != null ? day.meals[id] : meal[id] + 30);
+    const items = [
+      { id: 'wake', type: 'info', time: wake, title: 'အိပ်ရာထချိန်', icon: '☀️' },
+      { id: 'miracid', type: 'dose', med: 'miracid', time: wake, when: 'အိပ်ရာထထချင်း' },
+      { id: 'domp', type: 'dose', med: 'domp', time: wake, when: 'အိပ်ရာထထချင်း' },
+      { id: 'breakfast', type: 'meal', time: meal.breakfast },
+      { id: 'myonal1', type: 'dose', med: 'myonal', time: after('breakfast'), when: 'မနက်စာ စားပြီး' },
+      { id: 'lunch', type: 'meal', time: meal.lunch },
+      { id: 'myonal2', type: 'dose', med: 'myonal', time: after('lunch'), when: 'နေ့လယ်စာ စားပြီး' },
+      { id: 'dinner', type: 'meal', time: meal.dinner },
+      { id: 'myonal3', type: 'dose', med: 'myonal', time: after('dinner'), when: 'ညစာ စားပြီး' },
+      { id: 'clona', type: 'dose', med: 'clona', time: n(toMin(s.bed)), when: 'အိပ်ရာဝင်ချိန်' }
+    ];
+    items.forEach((it, i) => { it.order = i; });
+    return items.sort((a, b) => a.time - b.time || a.order - b.order);
+  }
+
+  function statusOf(it, day, now) {
+    if (it.type === 'info') return now >= it.time ? 'done' : 'upcoming';
+    if (it.type === 'meal') return day.meals[it.id] != null ? 'done' : now >= it.time ? 'due' : 'upcoming';
+    const rec = day.doses[it.id];
+    if (rec) return rec.status; // taken | skipped
+    if (now > it.time + MISSED_AFTER) return 'missed';
+    return now >= it.time ? 'due' : 'upcoming';
+  }
+  const titleOf = it => it.type === 'dose' ? MEDS[it.med].name : it.type === 'meal' ? MEALS[it.id].name : it.title;
+
+  /* ---------- ပြသခြင်း ---------- */
+  const BTN = 'rounded-xl font-medium px-4 py-2.5 text-sm transition-colors';
+
+  function render() {
+    const info = nowInfo(), day = getDay(info.key), items = buildSchedule(day), now = info.min;
+
+    $('#todayDate').textContent = `${WEEKDAYS[info.date.getDay()]}နေ့ · ${bn(info.date.getDate())} ${MONTHS[info.date.getMonth()]} ${bn(info.date.getFullYear())}`;
+    $('#clock').textContent = fmtTime(info.real.getHours() * 60 + info.real.getMinutes());
+
+    // တိုးတက်မှု
+    const taken = Object.values(day.doses).filter(r => r.status === 'taken').length;
+    $('#progressText').textContent = `${bn(taken)} / ${bn(TOTAL_DOSES)} ကြိမ်`;
+    $('#progressBar').style.width = `${Math.round(taken / TOTAL_DOSES * 100)}%`;
+
+    // နောက်တစ်ခု
+    const next = items.find(it => it.type !== 'info' && ['due', 'upcoming', 'missed'].includes(statusOf(it, day, now)));
+    const nt = $('#nextTitle'), nw = $('#nextWhen');
+    if (!next) {
+      nt.textContent = 'ယနေ့အတွက် ပြီးပါပြီ 🎉'; nw.textContent = ''; nw.className = 'text-sm';
+    } else {
+      nt.textContent = titleOf(next);
+      const st = statusOf(next, day, now);
+      if (st === 'missed') { nw.textContent = 'လွတ်နေပါသည်'; nw.className = 'text-sm font-semibold text-rose-600'; }
+      else if (st === 'due') { nw.textContent = 'အချိန်ကျပါပြီ'; nw.className = 'text-sm font-semibold text-amber-600'; }
+      else { nw.textContent = `${fmtDur(next.time - now)} အကြာတွင်`; nw.className = 'text-sm text-slate-500'; }
+    }
+
+    $('#timeline').innerHTML = items.map(it => itemHTML(it, day, now)).join('');
+    renderAdvisories();
+    renderPrn(day);
+    renderHistory(info.key);
+    renderNotifState();
+  }
+
+  function itemHTML(it, day, now) {
+    const st = statusOf(it, day, now);
+    const time = `<div class="w-[4.5rem] shrink-0 text-right pt-0.5"><p class="text-sm font-semibold ${st === 'missed' ? 'text-rose-600' : st === 'due' ? 'text-amber-600' : 'text-slate-700'} leading-tight">${fmtTime(it.time)}</p></div>`;
+
+    if (it.type === 'info') {
+      return `<li class="flex gap-3 items-center">${time}
+        <div class="flex-1 rounded-2xl bg-amber-50 border border-amber-100 px-4 py-2.5 text-amber-900 font-medium">${it.icon} ${it.title}</div></li>`;
+    }
+
+    if (it.type === 'meal') {
+      const m = MEALS[it.id], done = st === 'done';
+      return `<li class="flex gap-3">${time}
+        <div class="flex-1 min-w-0 rounded-2xl border px-4 py-3 ${done ? 'bg-emerald-50 border-emerald-200' : st === 'due' ? 'bg-white border-amber-300 ring-pulse' : 'bg-white border-slate-200'}">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="min-w-0">
+              <p class="font-semibold text-slate-800">${m.icon} ${m.name}</p>
+              <p class="text-sm ${done ? 'text-emerald-700' : st === 'due' ? 'text-amber-700' : 'text-slate-500'}">${done ? `✓ ${fmtTime(day.meals[it.id])} တွင် စားပြီး` : st === 'due' ? 'အစာစားချိန် ရောက်ပါပြီ' : 'အစာစားချိန်'}</p>
+            </div>
+            ${done
+              ? `<button data-action="meal-undo" data-id="${it.id}" class="text-sm text-slate-500 underline underline-offset-4">ပြန်ပြင်မည်</button>`
+              : `<button data-action="meal-done" data-id="${it.id}" class="${BTN} bg-sky-600 hover:bg-sky-700 text-white">စားပြီးပြီ</button>`}
+          </div>
+        </div></li>`;
+    }
+
+    const med = MEDS[it.med], rec = day.doses[it.id];
+    const box = {
+      taken: 'bg-emerald-50 border-emerald-200',
+      skipped: 'bg-slate-50 border-slate-300',
+      missed: 'bg-rose-50 border-rose-300',
+      due: 'bg-white border-amber-300 ring-pulse',
+      upcoming: 'bg-white border-slate-200'
+    }[st];
+    const badge = {
+      taken: `<span class="text-xs font-semibold bg-emerald-600 text-white rounded-full px-2.5 py-0.5">✓ သောက်ပြီး${rec ? ' · ' + fmtTime(rec.min) : ''}</span>`,
+      skipped: '<span class="text-xs font-semibold bg-slate-500 text-white rounded-full px-2.5 py-0.5">ကျော်လိုက်သည်</span>',
+      missed: '<span class="text-xs font-semibold bg-rose-600 text-white rounded-full px-2.5 py-0.5">လွတ်သွားပြီ</span>',
+      due: '<span class="text-xs font-semibold bg-amber-500 text-white rounded-full px-2.5 py-0.5">အချိန်ကျပြီ</span>',
+      upcoming: ''
+    }[st];
+    const warn = (st === 'missed' || st === 'skipped')
+      ? `<div class="mt-2 rounded-xl bg-rose-100 border border-rose-200 px-3 py-2 text-sm text-rose-900"><b>⚠️ မသောက်ရင် ဖြစ်မည့်ဆိုးကျိုး —</b> ${med.consequence}</div>` : '';
+    const actions = rec
+      ? `<button data-action="dose-undo" data-id="${it.id}" class="text-sm text-slate-500 underline underline-offset-4">ပြန်ပြင်မည်</button>`
+      : `<button data-action="dose-take" data-id="${it.id}" class="${BTN} bg-teal-600 hover:bg-teal-700 text-white">✓ သောက်ပြီးပြီ</button>
+         <button data-action="dose-skip" data-id="${it.id}" class="${BTN} bg-white border border-slate-300 text-slate-600 hover:bg-slate-50">ကျော်မည်</button>`;
+
+    return `<li class="flex gap-3">${time}
+      <div class="flex-1 min-w-0 rounded-2xl border px-4 py-3 ${box}">
+        <div class="flex items-start justify-between gap-2 flex-wrap">
+          <p class="font-semibold text-slate-800 ${st === 'skipped' ? 'line-through decoration-slate-400' : ''}">${med.icon} ${med.name} <span class="font-normal text-sm text-slate-500">(${med.sub})</span></p>
+          ${badge}
+        </div>
+        <p class="text-sm text-slate-600">${it.when} · ${med.rule}</p>
+        ${warn}
+        <div class="mt-2.5 flex items-center gap-2 flex-wrap">${actions}</div>
+      </div></li>`;
+  }
+
+  function renderAdvisories() {
+    const s = state.settings, wake = toMin(s.wake), n = m => (m < wake ? m + 1440 : m);
+    const b = n(toMin(s.breakfast)), l = n(toMin(s.lunch)), d = n(toMin(s.dinner)), bed = n(toMin(s.bed));
+    const out = [];
+    if (b - wake < 30) out.push('Miracid နှင့် Domp-M သည် အစာမစားမီ သောက်ရသောဆေးဖြစ်၍ အိပ်ရာထချိန်နှင့် မနက်စာကြား အနည်းဆုံး မိနစ် ၃၀ ခြားထားရန် အကြံပြုပါသည်။');
+    if (!(b < l && l < d)) out.push('အစာစားချိန်များ အစဉ်လိုက် မဖြစ်နေပါ — မနက်စာ၊ နေ့လယ်စာ၊ ညစာ အစီအစဉ်အတိုင်း ပြန်စစ်ပါ။');
+    if (bed <= d) out.push('အိပ်ရာဝင်ချိန်သည် ညစာထက် စောနေပါသည် — အချိန်ကို ပြန်စစ်ပါ။');
+    $('#advisories').innerHTML = out.map(t => `<p class="rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm px-3 py-2">💡 ${t}</p>`).join('');
+  }
+
+  function renderPrn(day) {
+    $('#prnLog').innerHTML = day.prn.length
+      ? `<p class="text-sm text-slate-600 mb-2">ယနေ့ ${bn(day.prn.length)} ကြိမ် သောက်ထားသည်</p>
+         <div class="flex flex-wrap gap-2">${day.prn.map((m, i) => `<span class="inline-flex items-center gap-1.5 bg-violet-50 border border-violet-200 text-violet-800 text-sm rounded-full pl-3 pr-1.5 py-0.5">${fmtTime(m)}<button data-action="prn-remove" data-id="${i}" class="w-6 h-6 rounded-full hover:bg-violet-200 leading-none" aria-label="ဖျက်မည်">×</button></span>`).join('')}</div>`
+      : '<p class="text-sm text-slate-400">ယနေ့ မသောက်ရသေးပါ</p>';
+  }
+
+  function renderHistory(todayKey) {
+    const base = keyToDate(todayKey), cells = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(base); d.setDate(d.getDate() - i);
+      const day = state.days[dateKey(d)];
+      const taken = day ? Object.values(day.doses).filter(r => r.status === 'taken').length : 0;
+      const pct = Math.round(taken / TOTAL_DOSES * 100);
+      const color = !day ? 'bg-slate-200' : pct === 100 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-400' : 'bg-rose-400';
+      cells.push(`<div class="text-center">
+        <div class="h-20 bg-slate-100 rounded-lg flex items-end overflow-hidden"><div class="w-full ${color} rounded-lg" style="height:${Math.max(pct, 6)}%"></div></div>
+        <p class="text-xs font-semibold text-slate-700 mt-1">${bn(taken)}/${bn(TOTAL_DOSES)}</p>
+        <p class="text-[11px] ${i === 0 ? 'text-teal-700 font-semibold' : 'text-slate-500'}">${i === 0 ? 'ယနေ့' : `${bn(d.getDate())}/${bn(d.getMonth() + 1)}`}</p>
+      </div>`);
+    }
+    $('#history').innerHTML = cells.join('');
+  }
+
+  /* ---------- Popup ---------- */
+  let modalOpen = false, modalActions = [];
+  function openModal({ tone = 'rose', icon = '⚠️', title, body, actions }) {
+    const tones = { rose: 'bg-rose-600', amber: 'bg-amber-500', teal: 'bg-teal-600' };
+    modalActions = actions;
+    $('#modalCard').innerHTML = `
+      <div class="${tones[tone]} text-white px-5 py-4 rounded-t-2xl"><p class="text-3xl">${icon}</p><h3 class="text-lg font-bold mt-1 leading-snug">${title}</h3></div>
+      <div class="px-5 py-4 text-slate-700 space-y-3">${body}</div>
+      <div class="px-5 pb-5 flex flex-col gap-2">${actions.map((a, i) => `<button data-modal="${i}" class="${BTN} w-full py-3 ${a.primary ? 'bg-teal-600 hover:bg-teal-700 text-white' : a.danger ? 'bg-white border border-rose-300 text-rose-700 hover:bg-rose-50' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}">${a.label}</button>`).join('')}</div>`;
+    $('#modal').classList.remove('hidden');
+    modalOpen = true;
+  }
+  function closeModal() { $('#modal').classList.add('hidden'); modalOpen = false; }
+  $('#modal').addEventListener('click', e => {
+    const b = e.target.closest('[data-modal]');
+    if (!b) return;
+    const a = modalActions[+b.dataset.modal];
+    closeModal();
+    if (a.fn) a.fn();
+    render();
+  });
+
+  const consequenceBox = med => `<div class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3"><p class="font-semibold text-rose-800">${med.icon} ${med.name} — မသောက်ရင် ဖြစ်မည့်ဆိုးကျိုး</p><p class="text-rose-900 mt-1">${med.consequence}</p></div>`;
+
+  /* ---------- လုပ်ဆောင်ချက်များ ---------- */
+  function takeDose(id) {
+    const info = nowInfo();
+    getDay(info.key).doses[id] = { status: 'taken', min: info.min };
+    save(); toast('✓ မှတ်တမ်းတင်ပြီးပါပြီ', 'teal');
+  }
+
+  function onAction(action, id) {
+    const info = nowInfo(), day = getDay(info.key), items = buildSchedule(day);
+    const it = items.find(x => x.id === id);
+
+    if (action === 'dose-take') {
+      // Clonazepam ကို အိပ်ရာဝင်ချိန်မတိုင်မီ စော၍ သောက်ရန် ကြိုးစားလျှင် သတိပေးမည်
+      if (it.med === 'clona' && info.min < it.time - 60) {
+        openModal({
+          tone: 'amber', icon: '🌙', title: 'Clonazepam ကို အိပ်ရာဝင်ချိန်တွင်သာ သောက်ရပါမည်',
+          body: `<p>သတ်မှတ်ထားသော အိပ်ရာဝင်ချိန်မှာ <b>${fmtTime(it.time)}</b> ဖြစ်ပြီး <b>${fmtDur(it.time - info.min)}</b> လိုပါသေးသည်။</p><p>စော၍သောက်ပါက နေ့ခင်းဘက် ငိုက်မျဉ်းခြင်း၊ မူးဝေခြင်း ဖြစ်နိုင်ပါသည်။ ယခု အမှန်တကယ် အိပ်ရာဝင်တော့မည်ဆိုမှသာ သောက်ပါ။</p>`,
+          actions: [
+            { label: 'အိပ်ရာဝင်ချိန်ကျမှ သောက်မည်', primary: true },
+            { label: 'ယခု အိပ်ရာဝင်တော့မည် — သောက်ပြီးပြီ', fn: () => takeDose(id) }
+          ]
+        });
+        return;
+      }
+      // Myonal ကို အစာမစားရသေးဘဲ သောက်ရန် ကြိုးစားလျှင် သတိပေးမည်
+      const mealId = { myonal1: 'breakfast', myonal2: 'lunch', myonal3: 'dinner' }[id];
+      if (mealId && day.meals[mealId] == null) {
+        openModal({
+          tone: 'amber', icon: '🍽️', title: `${MEALS[mealId].name} စားပြီးပြီလား?`,
+          body: `<p>Myonal ကို <b>အစာစားပြီးမှ</b> သောက်ရပါမည်။ ${MEALS[mealId].name} စားပြီးကြောင်း မမှတ်ရသေးပါ။</p>`,
+          actions: [
+            { label: 'စားပြီးပြီ — ဆေးလည်း သောက်ပြီးပြီ', primary: true, fn: () => { getDay(info.key).meals[mealId] = nowInfo().min; takeDose(id); } },
+            { label: 'မစားရသေးပါ — စားပြီးမှ သောက်မည်' }
+          ]
+        });
+        return;
+      }
+      takeDose(id);
+    }
+
+    else if (action === 'dose-skip') {
+      const med = MEDS[it.med];
+      openModal({
+        tone: 'rose', icon: '⚠️', title: `${med.name} ကို တကယ် ကျော်မလား?`,
+        body: consequenceBox(med) + `<p class="text-sm text-slate-600">ဆရာဝန်ညွှန်ကြားထားသည့်အတိုင်း ပုံမှန်သောက်မှသာ ရောဂါသက်သာမည်ဖြစ်ပါသည်။</p>`,
+        actions: [
+          { label: '✓ ပြန်စဉ်းစားပြီ — ဆေးသောက်မည်', primary: true },
+          { label: 'သိပါသည် — ဒီတစ်ကြိမ် ကျော်မည်', danger: true, fn: () => { getDay(info.key).doses[id] = { status: 'skipped', min: nowInfo().min }; save(); } }
+        ]
+      });
+      return;
+    }
+
+    else if (action === 'dose-undo') { delete day.doses[id]; day.warned[id] = true; }
+    else if (action === 'meal-done') { day.meals[id] = info.min; toast(`✓ ${MEALS[id].name} စားပြီးကြောင်း မှတ်ပြီးပါပြီ`, 'teal'); }
+    else if (action === 'meal-undo') { delete day.meals[id]; }
+    else if (action === 'prn-add') { day.prn.push(info.min); toast('✓ Gaviscon သောက်ကြောင်း မှတ်ပြီးပါပြီ', 'teal'); }
+    else if (action === 'prn-remove') { day.prn.splice(+id, 1); }
+    else if (action === 'reset-times') { state.settings = { ...DEFAULTS }; fillInputs(); afterTimeChange(); }
+    else if (action === 'enable-notif') { enableNotifications(); return; }
+
+    save(); render();
+  }
+
+  document.body.addEventListener('click', e => {
+    const b = e.target.closest('[data-action]');
+    if (b) onAction(b.dataset.action, b.dataset.id);
+  });
+
+  /* ---------- အချိန် ပြောင်းခြင်း ---------- */
+  const FIELDS = ['wake', 'breakfast', 'lunch', 'dinner', 'bed'];
+  function fillInputs() { FIELDS.forEach(f => { $('#t-' + f).value = state.settings[f]; }); }
+  function afterTimeChange() {
+    // အနာဂတ်သို့ ရွှေ့လိုက်သော အရာများအတွက် အသိပေးချက်ကို ပြန်ဖွင့်ပေးမည်
+    const info = nowInfo(), day = getDay(info.key);
+    buildSchedule(day).forEach(it => { if (it.time > info.min) { delete day.notified[it.id]; delete day.warned[it.id]; } });
+    save(); render();
+  }
+  FIELDS.forEach(f => $('#t-' + f).addEventListener('change', e => {
+    if (!e.target.value) { e.target.value = state.settings[f]; return; }
+    state.settings[f] = e.target.value;
+    afterTimeChange();
+  }));
+
+  /* ---------- အသိပေးချက်များ ---------- */
+  let swReg = null;
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
+  }
+
+  function renderNotifState() {
+    const btn = $('#notifBtn'), txt = $('#notifStatus');
+    if (!('Notification' in window)) {
+      txt.textContent = 'ဤ browser တွင် အသိပေးချက် မရနိုင်ပါ — အက်ပ်ထဲတွင်သာ သတိပေးပါမည်။'; btn.classList.add('hidden');
+    } else if (Notification.permission === 'granted') {
+      txt.textContent = 'ဖွင့်ထားပြီး ✓ — ဤစာမျက်နှာကို ဖွင့်ထားစဉ် အချိန်ကျတိုင်း အသိပေးပါမည်။'; btn.classList.add('hidden');
+    } else if (Notification.permission === 'denied') {
+      txt.textContent = 'ပိတ်ထားသည် — browser ၏ site settings တွင် ပြန်ဖွင့်ပေးပါ။'; btn.classList.add('hidden');
+    } else {
+      txt.textContent = 'ဆေးသောက်ချိန်၊ အစာစားချိန် ရောက်တိုင်း အသိပေးရန် ဖွင့်ပါ။'; btn.classList.remove('hidden');
+    }
+  }
+  async function enableNotifications() {
+    if (!('Notification' in window)) return;
+    const p = await Notification.requestPermission();
+    if (p === 'granted') pushNotify('အသိပေးချက် ဖွင့်ပြီးပါပြီ', 'ဆေးသောက်ချိန် ရောက်တိုင်း ဤကဲ့သို့ အသိပေးပါမည်။', 'welcome');
+    render();
+  }
+  function pushNotify(title, body, tag) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const opts = { body, tag, lang: 'my', renotify: true };
+    try {
+      if (swReg && swReg.showNotification) swReg.showNotification(title, opts);
+      else new Notification(title, opts);
+    } catch (e) { /* အချို့ မိုဘိုင်း browser များတွင် မရနိုင် — toast ဖြင့်သာ ပြမည် */ }
+  }
+  function beep() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext, ctx = new Ctx();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880; g.gain.setValueAtTime(0.15, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      o.start(); o.stop(ctx.currentTime + 0.6);
+      o.onended = () => ctx.close();
+    } catch (e) {}
+  }
+  function toast(text, tone = 'amber', ms = 3500) {
+    const cls = { amber: 'bg-amber-500', teal: 'bg-teal-600', rose: 'bg-rose-600' }[tone];
+    const el = document.createElement('div');
+    el.className = `slide-in pointer-events-auto ${cls} text-white rounded-xl shadow-lg px-4 py-2.5 text-sm font-medium max-w-md w-full sm:w-auto`;
+    el.textContent = text;
+    $('#toasts').appendChild(el);
+    setTimeout(() => el.remove(), ms);
+  }
+
+  function checkReminders() {
+    const info = nowInfo(), day = getDay(info.key), items = buildSchedule(day), now = info.min;
+    let changed = false;
+
+    // အချိန်ကျပြီ အသိပေးချက်
+    items.forEach(it => {
+      if (it.type === 'info' || day.notified[it.id]) return;
+      if (statusOf(it, day, now) !== 'due' || now - it.time > NOTIFY_WINDOW) return;
+      const title = it.type === 'meal' ? `${MEALS[it.id].icon} ${MEALS[it.id].name} စားချိန် ရောက်ပါပြီ` : `💊 ${MEDS[it.med].name} သောက်ချိန် ရောက်ပါပြီ`;
+      const body = it.type === 'meal' ? `${fmtTime(it.time)} — အစာစားပြီးနောက် Myonal သောက်ရန် မမေ့ပါနှင့်။` : `${it.when} · ${MEDS[it.med].rule}`;
+      pushNotify(title, body, it.id);
+      toast(title, 'amber', 9000);
+      day.notified[it.id] = true; changed = true;
+    });
+    if (changed) beep();
+
+    // လွတ်သွားသောဆေးများအတွက် ဆိုးကျိုး သတိပေး popup
+    if (!modalOpen) {
+      const missed = items.filter(it => it.type === 'dose' && statusOf(it, day, now) === 'missed' && !day.warned[it.id]);
+      if (missed.length) {
+        missed.forEach(it => { day.warned[it.id] = true; });
+        changed = true;
+        const meds = [...new Set(missed.map(it => it.med))].map(k => MEDS[k]);
+        pushNotify('⚠️ ဆေးသောက်ရန် လွတ်နေပါသည်', meds.map(m => m.name).join('၊ ') + ' — ' + meds[0].consequence, 'missed');
+        openModal({
+          tone: 'rose', icon: '⚠️', title: 'ဆေးသောက်ရန် လွတ်နေပါသည်',
+          body: `<p>အောက်ပါဆေးများကို သတ်မှတ်ချိန်တွင် မသောက်ရသေးပါ —</p>${meds.map(consequenceBox).join('')}
+                 <p class="text-sm text-slate-600">သတိရသည်နှင့် သောက်နိုင်ပါသည်။ သို့သော် နောက်တစ်ကြိမ် သောက်ချိန်နှင့် နီးနေပါက <b>နှစ်ဆတိုး၍ မသောက်ပါနှင့်။</b> Clonazepam ကို အိပ်ရာဝင်ချိန်တွင်သာ သောက်ပါ။</p>`,
+          actions: [{ label: 'နားလည်ပါပြီ — အချိန်ဇယားကို ကြည့်မည်', primary: true }]
+        });
+      }
+    }
+    if (changed) save();
+  }
+
+  /* ---------- စတင်ခြင်း ---------- */
+  function tick() { render(); checkReminders(); }
+  fillInputs();
+  tick();
+  setInterval(tick, 15000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+})();
+</script>
+</body>
+</html>
